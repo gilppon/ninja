@@ -1,0 +1,168 @@
+import React from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { useAudio } from '../contexts/AudioContext';
+import { motion, AnimatePresence } from 'motion/react';
+import { CHARACTERS } from '../constants/characters';
+import { useAuth } from '../contexts/AuthContext';
+
+
+
+const CyberMenuButton = ({ text, highlight, onClick, delay, hotEventText }: { text: string, highlight?: boolean, onClick: () => void, delay: number, hotEventText?: string }) => (
+  <motion.button 
+    initial={{ opacity: 0, x: -50 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay, type: "spring", stiffness: 200, damping: 20 }}
+    onClick={onClick}
+    className="group relative flex items-center justify-start pointer-events-auto outline-none"
+  >
+    <div className={`absolute inset-0 transform -skew-x-[20deg] border-2 transition-all ${
+      highlight 
+        ? 'bg-yellow-400/20 border-yellow-400 group-hover:bg-yellow-400/40 shadow-[0_0_15px_rgba(250,204,21,0.3)]' 
+        : 'bg-cyan-950/40 border-cyan-500/30 group-hover:bg-cyan-800/60 group-hover:border-cyan-400'
+    }`} />
+    
+    {/* Deco block on left */}
+    <div className={`w-3 h-8 md:h-12 ml-4 relative z-10 transform -skew-x-[20deg] ${highlight ? 'bg-yellow-400' : 'bg-cyan-500/50 group-hover:bg-cyan-400'}`} />
+    
+    <div className="py-2 md:py-3 px-4 md:px-6 relative z-10 flex flex-col items-start pr-12">
+      <span className={`font-black italic text-sm md:text-lg tracking-[0.2em] uppercase ${highlight ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'text-white group-hover:text-cyan-200'}`}>
+        {text}
+      </span>
+      {highlight && (
+        <span className="text-[8px] md:text-[10px] text-white bg-black px-1.5 py-0.5 transform -skew-x-[10deg] absolute -top-3 right-0 border border-yellow-400">{hotEventText || 'HOT EVENT'}</span>
+      )}
+    </div>
+  </motion.button>
+);
+
+interface LobbyProps {
+  onPlay: () => void;
+  onPlayDirect: (questId: string) => void;
+  onShowLogin: () => void;
+  selectedChar: number;
+  setSelectedChar: (index: number) => void;
+}
+
+export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selectedChar, setSelectedChar }: LobbyProps) {
+  const { t } = useLanguage();
+  const { addCoins } = useCurrency();
+  const { playSfx } = useAudio();
+  const { user } = useAuth();
+  const [showMenu, setShowMenu] = React.useState(false);
+
+  const characters = CHARACTERS;
+  const activeChar = characters[selectedChar];
+
+
+
+  const { playSfx: playSfxAudio, toggleMusic, isPlaying } = useAudio();
+
+  const handleNext = () => {
+    playSfx('select');
+    const nextIdx = (selectedChar + 1) % CHARACTERS.length;
+    setSelectedChar(nextIdx);
+  };
+
+  const handlePrev = () => {
+    playSfx('select');
+    const prevIdx = (selectedChar - 1 + CHARACTERS.length) % CHARACTERS.length;
+    setSelectedChar(prevIdx);
+  };
+
+
+
+
+
+  return (
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 font-sans pb-24">
+      {/* Background Starscape & Nebula */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#000_100%)] z-10" />
+        <div className="absolute top-1/4 left-1/4 w-[60vw] h-[60vh] bg-purple-600/30 blur-[140px] rounded-full mix-blend-screen" />
+        <div className="absolute bottom-1/4 right-1/4 w-[60vw] h-[60vh] bg-blue-600/30 blur-[140px] rounded-full mix-blend-screen" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-1 bg-cyan-400/20 blur-sm shadow-[0_0_50px_rgba(34,211,238,0.5)] z-0" />
+      </div>
+      
+      {/* Stars */}
+      <div className="absolute inset-0 z-0">
+        {Array.from({ length: 40 }).map((_, i) => (
+          <div key={i} className="absolute w-1 h-1 bg-white rounded-full opacity-50 shadow-[0_0_6px_white] animate-pulse" 
+            style={{ 
+              left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, 
+              transform: `scale(${Math.random()})`, animationDuration: `${2 + Math.random() * 3}s`
+            }} 
+          />
+        ))}
+      </div>
+
+
+
+      {/* Left utility menus removed for simplicity */}
+
+      {/* Central Character Carousel - Pushed up slightly to avoid BottomNav interference */}
+      <div className="absolute top-[45%] md:top-1/2 left-0 right-0 -translate-y-1/2 flex items-center justify-start md:justify-center gap-6 md:gap-6 overflow-x-auto md:overflow-visible px-[25vw] md:px-4 pointer-events-auto h-[450px] md:h-[550px] z-30 ml-0 md:ml-40 snap-x snap-mandatory scrollbar-hide touch-pan-x">
+        {characters.map((char, i) => {
+          const isActive = selectedChar === i;
+          return (
+            <motion.div
+              key={char.name}
+              onClick={() => { 
+                playSfx('select'); 
+                if (char.premium && !user) {
+                  setSelectedChar(i);
+                  onShowLogin();
+                } else {
+                  setSelectedChar(i);
+                  onPlayDirect('q1');
+                }
+              }}
+              animate={{ scale: isActive ? 1.05 : 0.85, opacity: isActive ? 1 : 0.6, y: isActive ? -15 : 0 }}
+              className={`relative cursor-pointer transition-all ${isActive ? 'z-40' : 'z-10'} w-32 md:w-64 h-72 md:h-[28rem] flex-shrink-0 group snap-center`}
+            >
+              <div className={`w-full h-full transform -skew-x-[10deg] overflow-hidden border-[3px] ${isActive ? 'border-yellow-300 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : 'border-cyan-400/20 md:group-hover:border-cyan-400/50'} flex flex-col justify-end relative bg-slate-900`}>
+                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
+                 <img src={char.img} className="absolute inset-0 w-[140%] h-[140%] md:w-[180%] md:h-[180%] object-cover object-top -translate-y-1 md:-translate-y-2 -translate-x-[15%] md:-translate-x-[20%]" alt={char.name} referrerPolicy="no-referrer" />
+                 
+                 <div className={`absolute bottom-0 w-full z-20 py-3 flex items-center justify-center border-t-2 ${isActive ? 'bg-zinc-950 border-yellow-400' : 'bg-black/80 border-cyan-400/30'}`}>
+                    <span className={`font-black italic tracking-widest text-base ${isActive ? 'text-white' : 'text-cyan-200'}`}>
+                      {t.characters[char.name as keyof typeof t.characters]?.role || char.role}
+                    </span>
+                 </div>
+              </div>
+              {isActive && (
+                <>
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-[4px] border-r-[4px] border-yellow-400 translate-x-2 -translate-y-2" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[4px] border-l-[4px] border-yellow-400 -translate-x-2 translate-y-2" />
+                </>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Info Display replacing useless hexagons (Moved Bottom-Left) */}
+      <div className="absolute bottom-40 md:bottom-32 left-6 md:left-12 flex flex-col gap-2 font-mono pointer-events-none drop-shadow-md z-40 max-w-[280px] md:max-w-sm">
+         <motion.div key={`tactics-${activeChar.name}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+           <div className="text-yellow-400 font-bold mb-1 uppercase tracking-widest text-xs md:text-sm flex items-center">
+             <div className="w-2 h-2 bg-yellow-400 mr-2 transform rotate-45" />
+             {t.characters[activeChar.name as keyof typeof t.characters]?.role || activeChar.role} {t.lobby.tactics}
+           </div>
+           <div className="text-cyan-50 text-xs md:text-sm leading-relaxed uppercase bg-cyan-900/40 p-3 border-l-4 border-cyan-400 backdrop-blur-sm shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+             {t.characters[activeChar.name as keyof typeof t.characters]?.description || activeChar.description}
+           </div>
+           {activeChar.ultimateType !== 'none' && (
+             <div className="mt-2 text-[10px] md:text-xs text-red-400 font-bold tracking-widest bg-black/50 px-2 py-1 inline-block border border-red-900/50">
+               ⚠️ {activeChar.ultimateType.toUpperCase()} {t.lobby.elementAura}
+             </div>
+           )}
+         </motion.div>
+      </div>
+
+      {/* (Removed DEPLOY button as navigation is now via BottomNav's Quest button) */}
+
+
+
+    </div>
+  );
+}
