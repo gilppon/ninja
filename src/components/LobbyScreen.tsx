@@ -141,19 +141,103 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selecte
         })}
       </div>
 
-      {/* Info Display replacing useless hexagons (Moved Bottom-Left) */}
-      <div className="absolute bottom-40 md:bottom-32 left-6 md:left-12 flex flex-col gap-2 font-mono pointer-events-none drop-shadow-md z-40 max-w-[280px] md:max-w-sm">
-         <motion.div key={`tactics-${activeChar.name}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-           <div className="text-yellow-400 font-bold mb-1 uppercase tracking-widest text-xs md:text-sm flex items-center">
-             <div className="w-2 h-2 bg-yellow-400 mr-2 transform rotate-45" />
-             {t.characters[activeChar.name as keyof typeof t.characters]?.role || activeChar.role} {t.lobby.tactics}
+      {/* Info Display - Character Details & Passive Skills */}
+      <div className="absolute bottom-40 md:bottom-32 left-6 md:left-12 flex flex-col gap-2 font-mono pointer-events-none drop-shadow-md z-40 max-w-[300px] md:max-w-md">
+         <motion.div key={`tactics-${activeChar.name}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+           {/* Character Name & Role Header */}
+           <div className="flex items-center gap-2 mb-1.5">
+             <div className="text-yellow-400 font-bold uppercase tracking-widest text-xs md:text-sm flex items-center">
+               <div className="w-2 h-2 bg-yellow-400 mr-2 transform rotate-45" />
+               {t.characters[activeChar.name as keyof typeof t.characters]?.role || activeChar.role} {t.lobby.tactics}
+             </div>
+             {activeChar.premium && (
+               <span className="text-[9px] md:text-[10px] font-black tracking-widest text-yellow-900 bg-gradient-to-r from-yellow-400 to-amber-300 px-2 py-0.5 rounded-sm shadow-[0_0_8px_rgba(250,204,21,0.4)]">
+                 PREMIUM
+               </span>
+             )}
            </div>
-           <div className="text-cyan-50 text-xs md:text-sm leading-relaxed uppercase bg-cyan-900/40 p-3 border-l-4 border-cyan-400 backdrop-blur-sm shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+
+           {/* Description Box */}
+           <div className="text-cyan-50 text-[10px] md:text-xs leading-relaxed uppercase bg-cyan-900/40 p-3 border-l-4 border-cyan-400 backdrop-blur-sm shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
              {t.characters[activeChar.name as keyof typeof t.characters]?.description || activeChar.description}
            </div>
+
+           {/* Passive Skill Section */}
+           <motion.div 
+             initial={{ opacity: 0, x: -10 }} 
+             animate={{ opacity: 1, x: 0 }} 
+             transition={{ delay: 0.15, duration: 0.3 }}
+             className="mt-2"
+           >
+             {activeChar.passiveDescription ? (
+               <div className={`relative p-2.5 md:p-3 border rounded-sm backdrop-blur-sm ${
+                 activeChar.ultimateType === 'flame' 
+                   ? 'bg-red-950/50 border-red-500/40 shadow-[0_0_12px_rgba(239,68,68,0.15)]' 
+                   : activeChar.ultimateType === 'ice'
+                   ? 'bg-cyan-950/50 border-cyan-400/40 shadow-[0_0_12px_rgba(34,211,238,0.15)]'
+                   : 'bg-yellow-950/50 border-yellow-400/40 shadow-[0_0_12px_rgba(250,204,21,0.15)]'
+               }`}>
+                 <div className="flex items-center gap-1.5 mb-1.5">
+                   <span className={`text-[9px] md:text-[10px] font-black tracking-[0.2em] ${
+                     activeChar.ultimateType === 'flame' ? 'text-red-400' 
+                     : activeChar.ultimateType === 'ice' ? 'text-cyan-400' 
+                     : 'text-yellow-400'
+                   }`}>
+                     ◆ PASSIVE SKILL
+                   </span>
+                 </div>
+                 <div className={`text-xs md:text-sm font-black italic tracking-wider ${
+                   activeChar.ultimateType === 'flame' ? 'text-orange-300' 
+                   : activeChar.ultimateType === 'ice' ? 'text-cyan-200' 
+                   : 'text-yellow-200'
+                 }`}>
+                   {activeChar.passiveDescription}
+                 </div>
+                 
+                 {/* Specific stat highlights */}
+                 <div className="flex flex-wrap gap-1.5 mt-2">
+                   {activeChar.coinMultiplier && activeChar.coinMultiplier > 1 && (
+                     <span className="text-[9px] md:text-[10px] font-bold text-yellow-300 bg-yellow-400/10 border border-yellow-500/30 px-1.5 py-0.5 rounded-sm">
+                       💰 COIN ×{activeChar.coinMultiplier}
+                     </span>
+                   )}
+                   {activeChar.comboGracePeriod && activeChar.comboGracePeriod > 1500 && (
+                     <span className="text-[9px] md:text-[10px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-500/30 px-1.5 py-0.5 rounded-sm">
+                       ⏱ COMBO {(activeChar.comboGracePeriod / 1000).toFixed(0)}s
+                     </span>
+                   )}
+                   {activeChar.slowEnemiesFactor && activeChar.slowEnemiesFactor < 1 && (
+                     <span className="text-[9px] md:text-[10px] font-bold text-blue-300 bg-blue-400/10 border border-blue-500/30 px-1.5 py-0.5 rounded-sm">
+                       🐢 SLOW -{Math.round((1 - activeChar.slowEnemiesFactor) * 100)}%
+                     </span>
+                   )}
+                   {activeChar.hasPeriodicShield && (
+                     <span className="text-[9px] md:text-[10px] font-bold text-amber-300 bg-amber-400/10 border border-amber-500/30 px-1.5 py-0.5 rounded-sm">
+                       🛡 SHIELD / 20s
+                     </span>
+                   )}
+                 </div>
+               </div>
+             ) : (
+               <div className="p-2.5 bg-white/5 border border-white/10 rounded-sm">
+                 <span className="text-[9px] md:text-[10px] font-bold tracking-[0.15em] text-white/40">
+                   ◇ STANDARD OPERATIVE — NO PASSIVE SKILL
+                 </span>
+               </div>
+             )}
+           </motion.div>
+
+           {/* Element Aura Indicator */}
            {activeChar.ultimateType !== 'none' && (
-             <div className="mt-2 text-[10px] md:text-xs text-red-400 font-bold tracking-widest bg-black/50 px-2 py-1 inline-block border border-red-900/50">
-               ⚠️ {activeChar.ultimateType.toUpperCase()} {t.lobby.elementAura}
+             <div className={`mt-2 text-[10px] md:text-xs font-bold tracking-widest bg-black/50 px-2 py-1 inline-flex items-center gap-1.5 border ${
+               activeChar.ultimateType === 'flame' ? 'text-red-400 border-red-900/50' 
+               : activeChar.ultimateType === 'ice' ? 'text-cyan-400 border-cyan-900/50' 
+               : 'text-yellow-400 border-yellow-900/50'
+             }`}>
+               <span className="animate-pulse">
+                 {activeChar.ultimateType === 'flame' ? '🔥' : activeChar.ultimateType === 'ice' ? '❄️' : '⚡'}
+               </span>
+               {activeChar.ultimateType.toUpperCase()} {t.lobby.elementAura}
              </div>
            )}
          </motion.div>

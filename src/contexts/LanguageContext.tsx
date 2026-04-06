@@ -55,20 +55,10 @@ export const translations = {
       title: "NINJA ARSENAL",
       subtitle: "MASTER THE ELEMENTS WITH LEGENDARY GEAR",
       items: {
-        flame: { name: 'FLAME KATANA', desc: 'Slices through blocks like butter.', features: ['Damage +20%', 'Burn Effect', 'Attack Speed +10%'] },
-        ice: { name: 'ICE SHURIKEN', desc: 'Freezes opponents mid-air.', features: ['Freeze Chance 15%', 'Range +30%', 'Crit +5%'] },
-        jade: { name: 'JADE NUNCHUCKS', desc: 'Fast strikes with a dragon spirit.', features: ['Combo Duration +2s', 'Move Speed +15%', 'Evasion +10%'] },
-        thunder: { name: 'THUNDER STAFF', desc: 'Shocking range and speed.', features: ['Chain Lightning', 'Stun Chance 10%', 'Damage +15%'] },
-        storm: { name: 'STORMBRINGER', desc: 'Summons the fury of heaven.', features: ['Chain Lightning', 'Atk Speed +25%', 'Critical +15%'] },
-        void: { name: 'VOID KATANA', desc: 'Slices through dimensions.', features: ['Lifesteal 5%', 'Crit +20%', 'Shadow Strike'] },
-        solar: { name: 'SOLAR GLAIVE', desc: 'Radiates the heat of the sun.', features: ['Area Burn', 'Damage +30%', 'Fire Resistance'] },
-        midnight: { name: 'MIDNIGHT DAGGER', desc: 'Silence is your best friend.', features: ['Evasion +20%', 'Move Speed +10%', 'Backstab +50%'] },
-        emerald_sai: { name: 'EMERALD SAI', desc: 'Coated in mystic venom.', features: ['Poison Damage', 'Combo Duration +3s', 'Evasion +10%'] },
-        glacier: { name: 'GLACIER SCYTHE', desc: 'Reap the frozen souls.', features: ['Area Freeze', 'Defense +15%', 'Range +20%'] },
-        starfall: { name: 'STARFALL SHURIKEN', desc: 'Guidance from the cosmos.', features: ['Homing Projectiles', 'Range +50%', 'Crit +10%'] },
-        golden: { name: 'GOLDEN KUNAI', desc: 'True wealth is in the strike.', features: ['Coin Bonus +50%', 'Score +20%', 'Luck +10%'] },
-        oni: { name: 'ONI SMASHER', desc: 'Heavy weight, heavy impact.', features: ['Super Armor', 'Stun Chance +20%', 'Block Break'] },
-        phantom: { name: 'PHANTOM BLADE', desc: 'Be the ghost in the machine.', features: ['Invisibility', 'Dmg Reduction +20%', 'Speed +15%'] }
+        aegis: { name: 'AEGIS KATANA', desc: 'Grants an absolute 1-hit shield.', features: ['1-Hit Immunity', 'Absorbs Boss Damage', 'Defense +50%'] },
+        time_shuriken: { name: 'TIME-SPACE SHURIKEN', desc: 'Bends time during combat.', features: ['Boss Timer +30%', 'Combo +2s', 'Agility +20%'] },
+        dragon_slayer: { name: 'DRAGON SLAYER', desc: 'The ultimate boss executioner.', features: ['Boss Dmg x2', 'Skip First Pattern', 'Attack +40%'] },
+        golden_jitte: { name: 'GOLDEN JITTE', desc: 'Wealth comes to those who strike.', features: ['Coin Gain x2', 'Score Max +50%', 'Luck +100%'] }
       },
       rarity: {
         COMMON: "COMMON",
@@ -88,7 +78,19 @@ export const translations = {
       score: 'Score',
       combo: 'COMBO',
       warning: 'WARNING',
-      boss: 'BOSS APPROACHING'
+      boss: 'BOSS APPROACHING',
+      patterns: {
+        'LIGHTNING SLASH': 'LIGHTNING SLASH',
+        'CROSS STRIKE': 'CROSS STRIKE',
+        'V STRIKE': 'V STRIKE',
+        'RISING DRAGON': 'RISING DRAGON',
+        'DEATH SPIRAL': 'DEATH SPIRAL',
+        'Z-STRIKE': 'Z-STRIKE',
+        'PENTAGRAM': 'PENTAGRAM',
+        'HEXAGON SEAL': 'HEXAGON SEAL',
+        'CROSS EXECUTION': 'CROSS EXECUTION',
+        'INFINITY SLASH': 'INFINITY SLASH'
+      }
     },
     gear: {
       title: 'ARMORY',
@@ -168,20 +170,10 @@ export const translations = {
       title: "닌자 무기고",
       subtitle: "전설적인 장비로 원소를 마스터하십시오",
       items: {
-        flame: { name: '화염 카타나', desc: '버터처럼 블록을 베어버립니다.', features: ['데미지 +20%', '화상 효과', '공격 속도 +10%'] },
-        ice: { name: '빙결 수리검', desc: '공중에서 적을 얼려버립니다.', features: ['빙결 확률 15%', '사거리 +30%', '크리티컬 +5%'] },
-        jade: { name: '옥색 쌍절곤', desc: '용의 기운을 담은 빠른 타격.', features: ['콤보 지속 시간 +2초', '이동 속도 +15%', '회피율 +10%'] },
-        thunder: { name: '뇌전 지팡이', desc: '충격적인 사거리와 속도.', features: ['체인 라이트닝', '기절 확률 10%', '데미지 +15%'] },
-        storm: { name: '스톰브링어', desc: '천상의 분노를 소환합니다.', features: ['연쇄 번개', '공속 +25%', '치명타 +15%'] },
-        void: { name: '보이드 카타나', desc: '차원을 베어 넘기는 암흑의 검.', features: ['생명력 흡수 5%', '치명타 +20%', '그림자 공격'] },
-        solar: { name: '솔라 글레이브', desc: '태양의 열기를 내뿜습니다.', features: ['광역 화상', '데미지 +30%', '화염 저항'] },
-        midnight: { name: '미드나잇 대거', desc: '침묵은 당신의 최고의 친구입니다.', features: ['회피율 +20%', '이동 속도 +10%', '백스테브 +50%'] },
-        emerald_sai: { name: '에메랄드 사이', desc: '신비로운 맹독이 발려 있습니다.', features: ['맹독 데미지', '콤보 유지 +3초', '회피율 +10%'] },
-        glacier: { name: '글래시어 사이드', desc: '얼어붙은 영혼을 수확합니다.', features: ['광역 빙결', '방어력 +15%', '사거리 +20%'] },
-        starfall: { name: '스타폴 수리검', desc: '우주의 인도를 받으세요.', features: ['유도 사출물', '사거리 +50%', '치명타 +10%'] },
-        golden: { name: '골든 쿠나이', desc: '진정한 부는 타격에서 나옵니다.', features: ['코인 보너스 +50%', '점수 +20%', '행운 +10%'] },
-        oni: { name: '오니 스매셔', desc: '묵직한 무게, 묵직한 충격.', features: ['슈퍼 아머', '기절 확률 +20%', '방어 무시'] },
-        phantom: { name: '팬텀 블레이드', desc: '기계 속의 유령이 되세요.', features: ['투명화', '피해 감소 +20%', '속도 +15%'] }
+        aegis: { name: '에이지스 카타나', desc: '파괴 불가능한 1회용 방어막을 부여합니다.', features: ['1회 피격 무효화', '보스 피해 흡수', '방어력 +50%'] },
+        time_shuriken: { name: '시공의 수리검', desc: '전투 중 시간을 비틉니다.', features: ['보스 패턴 시간 +30%', '콤보 유지 +2초', '민첩성 +20%'] },
+        dragon_slayer: { name: '드래곤 슬레이어', desc: '궁극의 보스 처형 검.', features: ['보스 데미지 2배', '첫 패턴 스킵', '공격력 +40%'] },
+        golden_jitte: { name: '황금의 십수', desc: '타격하는 자에게 부가 따릅니다.', features: ['코인 획득 2배', '스코어 배율 +50%', '행운 +100%'] }
       },
       rarity: {
         COMMON: "일반",
@@ -201,7 +193,19 @@ export const translations = {
       score: '점수',
       combo: '콤보',
       warning: '경고',
-      boss: '보스 접근 중'
+      boss: '보스 접근 중',
+      patterns: {
+        'LIGHTNING SLASH': '번개섬',
+        'CROSS STRIKE': '십자참',
+        'V STRIKE': 'V자 베기',
+        'RISING DRAGON': '승룡연참',
+        'DEATH SPIRAL': '파멸의 소용돌이',
+        'Z-STRIKE': '제트섬',
+        'PENTAGRAM': '성흔',
+        'HEXAGON SEAL': '육각결계',
+        'CROSS EXECUTION': '십자처형',
+        'INFINITY SLASH': '무한참'
+      }
     },
     gear: {
       title: '무기고',
@@ -281,20 +285,10 @@ export const translations = {
       title: "ニンジャの武器庫",
       subtitle: "伝説の装備で元素をマスターせよ",
       items: {
-        flame: { name: '炎の刀', desc: 'ブロックをバターのように切り裂く。', features: ['ダメージ +20%', '燃焼効果', '攻撃速度 +10%'] },
-        ice: { name: '氷の手裏剣', desc: '空中で敵を凍らせる。', features: ['凍結確率 15%', '射程 +30%', 'クリティカル +5%'] },
-        jade: { name: '翡翠のヌンチャク', desc: '龍の魂を宿した高速打撃。', features: ['コンボ継続時間 +2秒', '移動速度 +15%', '回避率 +10%'] },
-        thunder: { name: '雷の杖', desc: '驚異的な射程と速度。', features: ['チェインライトニング', 'スタン確率 10%', 'ダメージ +15%'] },
-        storm: { name: 'ストームブリンガー', desc: '天の怒りを召喚する。', features: ['連鎖稲妻', '攻撃速度 +25%', 'クリティカル +15%'] },
-        void: { name: 'ヴォイド・カタナ', desc: '次元を切り裂く暗黒の剣。', features: ['ライフスティール 5%', 'クリティカル +20%', 'シャドウストライク'] },
-        solar: { name: 'ソーラー・グレイブ', desc: '太陽の熱気を放つ。', features: ['範囲燃焼', 'ダメージ +30%', '火炎耐性'] },
-        midnight: { name: 'ミッドナイト・ダガー', desc: '沈黙は最高の友。', features: ['回避率 +20%', '移動速度 +10%', 'バックスタブ +50%'] },
-        emerald_sai: { name: 'エメラルド・サイ', desc: '神秘的な猛毒が塗られている。', features: ['猛毒ダメージ', 'コンボ維持 +3秒', '回避率 +10%'] },
-        glacier: { name: 'グレイシア・サイズ', desc: '凍りついた魂を刈り取る。', features: ['範囲凍結', '防御力 +15%', '射程 +20%'] },
-        starfall: { name: 'スターフォール手裏剣', desc: '宇宙からの導き。', features: ['誘導弾', '射程 +50%', 'クリティカル +10%'] },
-        golden: { name: 'ゴールデン・クナイ', desc: '真の富は打撃から生まれる。', features: ['コインボーナス +50%', 'スコア +20%', '幸運 +10%'] },
-        oni: { name: 'オニ・スマッシャー', desc: '重い重量、重い衝撃。', features: ['スーパーアーマー', 'スタン確率 +20%', '防御無視'] },
-        phantom: { name: 'ファントム・ブレイド', desc: '機械の中の幽霊になれ。', features: ['透明化', 'ダメージ軽減 +20%', '速度 +15%'] }
+        aegis: { name: 'イージスの刀', desc: '破壊不可の1回用シールドを付与。', features: ['1回被弾無効化', 'ボスダメージ吸収', '防御力 +50%'] },
+        time_shuriken: { name: '時空の手裏剣', desc: '戦闘中の時間を歪める。', features: ['パターン時間 +30%', 'コンボ維持 +2秒', '敏捷性 +20%'] },
+        dragon_slayer: { name: 'ドラゴンスレイヤー', desc: '究極のボス処刑剣。', features: ['ボスダメージ2倍', '最初のパターンスキップ', '攻撃力 +40%'] },
+        golden_jitte: { name: '黄金の十手', desc: '打撃する者に富がもたらされる。', features: ['コイン獲得量 2倍', 'スコア倍率 +50%', '運 +100%'] }
       },
       rarity: {
         COMMON: "コモン",
@@ -314,7 +308,19 @@ export const translations = {
       score: 'スコア',
       combo: 'コンボ',
       warning: '警告',
-      boss: 'ボス接近中'
+      boss: 'ボス接近中',
+      patterns: {
+        'LIGHTNING SLASH': '雷閃',
+        'CROSS STRIKE': '十字斬',
+        'V STRIKE': 'V字斬り',
+        'RISING DRAGON': '昇龍連斬',
+        'DEATH SPIRAL': '死の螺旋',
+        'Z-STRIKE': 'Zストライク',
+        'PENTAGRAM': '星痕',
+        'HEXAGON SEAL': '六角結界',
+        'CROSS EXECUTION': '十字処刑',
+        'INFINITY SLASH': '無限斬'
+      }
     },
     gear: {
       title: '武器庫',
@@ -394,20 +400,10 @@ export const translations = {
       title: "忍者军械库",
       subtitle: "用传奇装备掌握元素",
       items: {
-        flame: { name: '火焰武士刀', desc: '像切黄油一样切开积木。', features: ['伤害 +20%', '燃烧效果', '攻击速度 +10%'] },
-        ice: { name: '寒冰手里剑', desc: '在半空中冻结敌人。', features: ['冰冻几率 15%', '射程 +30%', '暴击 +5%'] },
-        jade: { name: '翡翠双截棍', desc: '蕴含龙之精神的快速打击。', features: ['连击持续时间 +2秒', '移动速度 +15%', '闪避率 +10%'] },
-        thunder: { name: '雷霆法杖', desc: '惊人的射程和速度。', features: ['连锁闪电', '眩晕几率 10%', '伤害 +15%'] },
-        storm: { name: '风暴使者', desc: '召唤上天的愤怒。', features: ['连锁闪电', '攻速 +25%', '暴击 +15%'] },
-        void: { name: '虚空武士刀', desc: '斩断次元的黑暗之刃。', features: ['吸血 5%', '暴击 +20%', '暗影打击'] },
-        solar: { name: '烈阳长柄刀', desc: '散发太阳的热气。', features: ['区域灼烧', '伤害 +30%', '火焰抗性'] },
-        midnight: { name: '午夜短刀', desc: '寂静是你最好的朋友。', features: ['闪避率 +20%', '移速 +10%', '背刺 +50%'] },
-        emerald_sai: { name: '翡翠铁尺', desc: '涂有神秘猛毒。', features: ['猛毒伤害', '连击维持 +3秒', '闪避率 +10%'] },
-        glacier: { name: '冰川长镰', desc: '收割冻结的灵魂。', features: ['区域冻结', '防御 +15%', '射程 +20%'] },
-        starfall: { name: '星陨手里剑', desc: '接受宇宙的引导。', features: ['追踪弹', '射程 +50%', '暴击 +10%'] },
-        golden: { name: '黄金苦无', desc: '真正的财富来自打击。', features: ['金币奖励 +50%', '分数 +20%', '幸运 +10%'] },
-        oni: { name: '鬼神大锤', desc: '沉重的重量，沉重的冲击。', features: ['霸体', '眩晕几率 +20%', '破甲'] },
-        phantom: { name: '幻影之刃', desc: '成为机器中的幽灵。', features: ['透明化', '减伤 +20%', '速度 +15%'] }
+        aegis: { name: '神盾武士刀', desc: '赋予绝对的1次性护盾。', features: ['免疫1次攻击', '吸收首领伤害', '防御力 +50%'] },
+        time_shuriken: { name: '时空手里剑', desc: '在战斗中扭曲时间。', features: ['首领时间限制 +30%', '连击保持时间 +2秒', '敏捷度 +20%'] },
+        dragon_slayer: { name: '屠龙者', desc: '终极的首领处刑剑。', features: ['首领伤害2倍', '跳过第一个图案', '攻击力 +40%'] },
+        golden_jitte: { name: '黄金十手', desc: '敲击者将得财富。', features: ['金币获取量 2倍', '分数倍率 +50%', '幸运 +100%'] }
       },
       rarity: {
         COMMON: "普通",
@@ -427,7 +423,19 @@ export const translations = {
       score: '分数',
       combo: '连击',
       warning: '警告',
-      boss: '首领接近中'
+      boss: '首领接近中',
+      patterns: {
+        'LIGHTNING SLASH': '雷闪',
+        'CROSS STRIKE': '十字斩',
+        'V STRIKE': 'V字斩',
+        'RISING DRAGON': '升龙连斩',
+        'DEATH SPIRAL': '死亡螺旋',
+        'Z-STRIKE': 'Z字突击',
+        'PENTAGRAM': '星痕',
+        'HEXAGON SEAL': '六角结界',
+        'CROSS EXECUTION': '十字处刑',
+        'INFINITY SLASH': '无限斩'
+      }
     },
     gear: {
       title: '军械库',
@@ -507,20 +515,10 @@ export const translations = {
       title: "ARSENAL NINJA",
       subtitle: "DOMINA LOS ELEMENTOS CON EQUIPO LEGENDARIO",
       items: {
-        flame: { name: 'Katana de Fuego', desc: 'Corta los bloques como mantequilla.', features: ['Daño +20%', 'Efecto de Quemadura', 'Velocidad de Ataque +10%'] },
-        ice: { name: 'Shuriken de Hielo', desc: 'Congela a los oponentes en el aire.', features: ['Probabilidad de Congelar 15%', 'Alcance +30%', 'Golpe Crítico +5%'] },
-        jade: { name: 'Nunchakus de Jade', desc: 'Golpes rápidos con espíritu de dragón.', features: ['Duración de Combo +2s', 'Velocidad de Movimiento +15%', 'Evasión +10%'] },
-        thunder: { name: 'Bastón de Trueno', desc: 'Alcance y velocidad impactantes.', features: ['Relámpago en Cadena', 'Probabilidad de Aturdir 10%', 'Daño +15%'] },
-        storm: { name: 'Portador de Tormentas', desc: 'Invoca la furia del cielo.', features: ['Relámpago en Cadena', 'Velo. Ataque +25%', 'Crítico +15%'] },
-        void: { name: 'Katana del Vacío', desc: 'Corta a través de las dimensiones.', features: ['Robo de Vida 5%', 'Crítico +20%', 'Golpe Sombra'] },
-        solar: { name: 'Cuchilla Solar', desc: 'Irradia el calor del sol.', features: ['Quemadura de Área', 'Daño +30%', 'Resistencia Fuego'] },
-        midnight: { name: 'Daga de Medianoche', desc: 'El silencio es tu mejor amigo.', features: ['Evasión +20%', 'Velo. Movimiento +10%', 'Apuñalada +50%'] },
-        emerald_sai: { name: 'Sai de Esmeralda', desc: 'Recubierto con veneno místico.', features: ['Daño Veneno', 'Dura. Combo +3s', 'Evasión +10%'] },
-        glacier: { name: 'Guadaña Glacial', desc: 'Cosecha las almas congeladas.', features: ['Congelación Área', 'Defensa +15%', 'Alcance +20%'] },
-        starfall: { name: 'Shuriken de Estrellas', desc: 'Guía desde el cosmos.', features: ['Proyectiles Telediri.', 'Alcance +50%', 'Crítico +10%'] },
-        golden: { name: 'Kunai de Oro', desc: 'La verdadera riqueza está en el golpe.', features: ['Bono Monedas +50%', 'Puntuación +20%', 'Suerte +10%'] },
-        oni: { name: 'Martillo Oni', desc: 'Peso pesado, impacto pesado.', features: ['Súper Armadura', 'Prob. Aturdir +20%', 'Rompe Bloques'] },
-        phantom: { name: 'Sable Fantasma', desc: 'Sé el fantasma en la máquina.', features: ['Invisibilidad', 'Reduc. Daño +20%', 'Velocidad +15%'] }
+        aegis: { name: 'Katana Égida', desc: 'Otorga un escudo absoluto de 1 golpe.', features: ['Inmunidad 1 Golpe', 'Absorbe Daño de Jefe', 'Defensa +50%'] },
+        time_shuriken: { name: 'Shuriken Espacio-Temporal', desc: 'Dobla el tiempo durante el combate.', features: ['Tiempo de Jefe +30%', 'Duración de Combo +2s', 'Agilidad +20%'] },
+        dragon_slayer: { name: 'Mata Dragones', desc: 'El verdugo definitivo de jefes.', features: ['Daño a Jefe x2', 'Omitir Primer Patrón', 'Ataque +40%'] },
+        golden_jitte: { name: 'Jitte Dorado', desc: 'La riqueza llega a quienes golpean.', features: ['Ganancia Monedas x2', 'Multiplicador Puntuación +50%', 'Suerte +100%'] }
       },
       rarity: {
         COMMON: "COMÚN",
@@ -540,7 +538,19 @@ export const translations = {
       score: 'Puntuación',
       combo: 'COMBO',
       warning: 'ADVERTENCIA',
-      boss: 'JEFE ACERCÁNDOSE'
+      boss: 'JEFE ACERCÁNDOSE',
+      patterns: {
+        'LIGHTNING SLASH': 'CORTE RELÁMPAGO',
+        'CROSS STRIKE': 'GOLPE CRUZADO',
+        'V STRIKE': 'CORTE EN V',
+        'RISING DRAGON': 'DRAGÓN ASCENDENTE',
+        'DEATH SPIRAL': 'ESPIRAL DE LA MUERTE',
+        'Z-STRIKE': 'GOLPE Z',
+        'PENTAGRAM': 'PENTAGRAMA',
+        'HEXAGON SEAL': 'SELLO HEXAGONAL',
+        'CROSS EXECUTION': 'EJECUCIÓN CRUZADA',
+        'INFINITY SLASH': 'CORTE INFINITO'
+      }
     },
     gear: {
       title: 'ARMERÍA',

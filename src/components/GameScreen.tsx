@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Swords } from 'lucide-react';
+import { Sparkles, Swords, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useInventory } from '../contexts/InventoryContext';
@@ -76,9 +76,91 @@ const BOSS_PATTERNS: BossPattern[] = [
     ],
     dmgOnSuccess: 15,
   },
+  {
+    name: 'Z-STRIKE',
+    icon: '💨',
+    nodes: [
+      { x: 0.2, y: 0.2 },
+      { x: 0.8, y: 0.2 },
+      { x: 0.2, y: 0.8 },
+      { x: 0.8, y: 0.8 },
+    ],
+    dmgOnSuccess: 12,
+  },
+  {
+    name: 'PENTAGRAM',
+    icon: '⭐',
+    nodes: [
+      { x: 0.5, y: 0.15 },
+      { x: 0.85, y: 0.85 },
+      { x: 0.15, y: 0.4 },
+      { x: 0.85, y: 0.4 },
+      { x: 0.15, y: 0.85 },
+      { x: 0.5, y: 0.15 },
+    ],
+    dmgOnSuccess: 20,
+  },
+  {
+    name: 'HEXAGON SEAL',
+    icon: '💠',
+    nodes: [
+      { x: 0.5, y: 0.1 },
+      { x: 0.85, y: 0.3 },
+      { x: 0.85, y: 0.7 },
+      { x: 0.5, y: 0.9 },
+      { x: 0.15, y: 0.7 },
+      { x: 0.15, y: 0.3 },
+      { x: 0.5, y: 0.1 },
+    ],
+    dmgOnSuccess: 22,
+  },
+  {
+    name: 'CROSS EXECUTION',
+    icon: '⚔️',
+    nodes: [
+      { x: 0.15, y: 0.15 },
+      { x: 0.85, y: 0.85 },
+      { x: 0.15, y: 0.85 },
+      { x: 0.85, y: 0.15 },
+    ],
+    dmgOnSuccess: 16,
+  },
+  {
+    name: 'INFINITY SLASH',
+    icon: '♾️',
+    nodes: [
+      { x: 0.5, y: 0.5 },
+      { x: 0.8, y: 0.25 },
+      { x: 0.9, y: 0.5 },
+      { x: 0.8, y: 0.75 },
+      { x: 0.5, y: 0.5 },
+      { x: 0.2, y: 0.25 },
+      { x: 0.1, y: 0.5 },
+      { x: 0.2, y: 0.75 },
+      { x: 0.5, y: 0.5 },
+    ],
+    dmgOnSuccess: 25,
+  },
 ];
 
-const PATTERN_NODE_RADIUS = 45; // Pixel radius for hitting a checkpoint
+const BOSS_PATTERN_NODE_RADIUS = 45; // Pixel radius for hitting a boss checkpoint
+const MINION_PATTERN_NODE_RADIUS = 65; // Pixel radius for hitting a minion checkpoint (generous!)
+
+// ===== MINION SIMPLE PATTERNS (relative to enemy center, in pixels) =====
+type MinionPattern = {
+  name: string;
+  icon: string;
+  nodes: { dx: number; dy: number }[]; // Offset from enemy center in pixels
+};
+
+const MINION_PATTERNS: MinionPattern[] = [
+  { name: 'SLASH UP', icon: '↗', nodes: [{ dx: -60, dy: 50 }, { dx: 60, dy: -50 }] },
+  { name: 'SLASH DOWN', icon: '↘', nodes: [{ dx: -60, dy: -50 }, { dx: 60, dy: 50 }] },
+  { name: 'HORIZONTAL', icon: '→', nodes: [{ dx: -70, dy: 0 }, { dx: 70, dy: 0 }] },
+  { name: 'VERTICAL', icon: '↓', nodes: [{ dx: 0, dy: -60 }, { dx: 0, dy: 60 }] },
+  { name: 'V STRIKE', icon: '∧', nodes: [{ dx: -60, dy: -40 }, { dx: 0, dy: 50 }, { dx: 60, dy: -40 }] },
+  { name: 'REVERSE V', icon: '∨', nodes: [{ dx: -60, dy: 40 }, { dx: 0, dy: -50 }, { dx: 60, dy: 40 }] },
+];
 
 const BG_MAP: Record<string, string> = {
   'MASTER': '/assets/background/bg_master.jpeg',
@@ -89,18 +171,18 @@ const BG_MAP: Record<string, string> = {
 };
 
 const ENEMY_IMGS = [
-  '/assets/enemies/e_drone.jpeg',
-  '/assets/enemies/e_hound.jpeg',
-  '/assets/enemies/e_thug.jpeg',
-  '/assets/enemies/e_shield.jpeg',
-  '/assets/enemies/e_crawler.jpeg'
+  '/assets/enemies/e_drone.png',
+  '/assets/enemies/e_hound.png',
+  '/assets/enemies/e_thug.png',
+  '/assets/enemies/e_shield.png',
+  '/assets/enemies/e_crawler.png'
 ];
 
 const BOSS_DATA: Record<string, { name: string, img: string }> = {
-  shogun: { name: "IRON SHOGUN", img: "/assets/enemies/b_shogun.jpeg" },
-  oni: { name: "NEON ONI", img: "/assets/enemies/b_oni.jpeg" },
-  dragon: { name: "CYBER DRAGON", img: "/assets/enemies/b_dragon.jpeg" },
-  void: { name: "VOID NINJA", img: "/assets/enemies/b_void.jpeg" }
+  shogun: { name: "IRON SHOGUN", img: "/assets/enemies/b_shogun.png" },
+  oni: { name: "NEON ONI", img: "/assets/enemies/b_oni.png" },
+  dragon: { name: "CYBER DRAGON", img: "/assets/enemies/b_dragon.png" },
+  void: { name: "VOID NINJA", img: "/assets/enemies/b_void.png" }
 };
 
 const ParticleBurst = ({ x, y, charName }: { x?: number, y?: number, key?: string, charName?: string }) => {
@@ -221,7 +303,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
   const [bursts, setBursts] = useState<{id: number, x?: number, y?: number}[]>([]);
   const [showBossWarning, setShowBossWarning] = useState(false);
   const [slashes, setSlashes] = useState<{id: number, x: number, y: number, length: number, angle: number}[]>([]);
-  const [enemies, setEnemies] = useState<{id: number, x: number, y: number, size: number, img: string, isBoss?: boolean, hp?: number, maxHp?: number, lastAttackAt?: number}[]>([]);
+  const [enemies, setEnemies] = useState<{id: number, x: number, y: number, size: number, img: string, isBoss?: boolean, hp?: number, maxHp?: number, lastAttackAt?: number, pattern?: MinionPattern, patternProgress?: number}[]>([]);
   const [totalKills, setTotalKills] = useState(0); // Added for boss spawn triggers
   const [defeatedBosses, setDefeatedBosses] = useState(0);
   const [bgImage, setBgImage] = useState('');
@@ -254,6 +336,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
   const [thunderShieldActive, setThunderShieldActive] = useState(character.hasPeriodicShield || false);
   const thunderShieldRef = useRef(character.hasPeriodicShield || false);
   const lastShieldBrokenAt = useRef(Date.now());
+  const lastSlashTimeRef = useRef(0);
   
   useEffect(() => {
     thunderShieldRef.current = thunderShieldActive;
@@ -268,6 +351,24 @@ export default function GameScreen({ character, questId, onFail }: { character: 
     }, 500);
     return () => clearInterval(interval);
   }, [character.hasPeriodicShield]);
+
+  useEffect(() => {
+    // Show boss warning when total kills is close to milestone (multiples of 50)
+    const nextMilestone = (defeatedBosses + 1) * 50;
+    const isClose = totalKills >= nextMilestone - 10 && totalKills < nextMilestone;
+    const noBossActive = !enemies.some(e => e.isBoss);
+    
+    if (isClose && noBossActive) {
+      if (!showBossWarning) {
+        setShowBossWarning(true);
+        playSfx('warning');
+      }
+    } else {
+      if (showBossWarning) {
+        setShowBossWarning(false);
+      }
+    }
+  }, [totalKills, defeatedBosses, enemies, showBossWarning, playSfx]);
 
   const takeDamage = useCallback((amount: number) => {
     if (thunderShieldRef.current) {
@@ -376,26 +477,32 @@ export default function GameScreen({ character, questId, onFail }: { character: 
         }
 
         if (hasBoss) return prev;
-        const maxEnemies = isFever ? 15 : Math.min(8, 3 + Math.floor(totalKills / 20));
-        if (prev.length >= maxEnemies) return prev;
+        // === ONE AT A TIME: only spawn if no minions on field (fever: up to 3) ===
+        const minionCount = prev.filter(e => !e.isBoss).length;
+        const maxMinions = isFever ? 3 : 1;
+        if (minionCount >= maxMinions) return prev;
 
         const w = containerRef.current?.clientWidth || window.innerWidth;
         const h = containerRef.current?.clientHeight || window.innerHeight;
         const randomMinion = MINION_ASSETS[Math.floor(Math.random() * MINION_ASSETS.length)];
 
+        const randomPattern = MINION_PATTERNS[Math.floor(Math.random() * MINION_PATTERNS.length)];
         return [...prev, {
           id: Date.now() + Math.random(),
           x: w * 0.1 + Math.random() * (w * 0.8),
-          y: h * 0.1 + Math.random() * (h * 0.7),
-          size: isFever ? 140 : 100,
+          y: h * 0.15 + Math.random() * (h * 0.6),
+          size: isFever ? 140 : 120,
           img: randomMinion,
           createdAt: Date.now(),
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: (Math.random() - 0.5) * 1.5,
+          pattern: randomPattern,
+          patternProgress: 0
         }];
       });
 
-      const nextRate = isFever ? 400 : Math.max(300, 1000 - (Math.floor(totalKills / 10) * 50));
+      // Quick re-check: spawn immediately when field is empty, otherwise normal interval
+      const nextRate = isFever ? 400 : 600;
       spawnTimer = setTimeout(spawnEnemy, nextRate);
     };
 
@@ -549,6 +656,9 @@ export default function GameScreen({ character, questId, onFail }: { character: 
     startPosRef.current = pos;
     lastPosRef.current = pos;
     hitEnemiesRef.current.clear();
+    
+    // No sound on initial click per user request "only on hit"
+    lastSlashTimeRef.current = Date.now();
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -565,10 +675,13 @@ export default function GameScreen({ character, questId, onFail }: { character: 
 
     // Only process if moved enough to define a segment or after small threshold
     if (dist > 2) {
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-      const newSlash = { id: Date.now() + Math.random(), x: lastX, y: lastY, length: dist, angle };
-      setSlashes(prev => [...prev.slice(-10), newSlash]); // Limit concurrent slashes for performance
-      setTimeout(() => setSlashes(prev => prev.filter(s => s.id !== newSlash.id)), 200);
+      const angle = Math.atan2(currentY - lastY, currentX - lastX) * 180 / Math.PI;
+      
+      const triggerSlashEffect = () => {
+        const newSlash = { id: Date.now() + Math.random(), x: lastX, y: lastY, length: dist, angle };
+        setSlashes(prev => [...prev.slice(-10), newSlash]); // Limit concurrent slashes for performance
+        setTimeout(() => setSlashes(prev => prev.filter(s => s.id !== newSlash.id)), 200);
+      };
 
       let hitAny = false;
       const now = Date.now();
@@ -596,8 +709,9 @@ export default function GameScreen({ character, questId, onFail }: { character: 
             (currentX - nodeScreenX) ** 2 + (currentY - nodeScreenY) ** 2
           );
           
-          if (distToNode < PATTERN_NODE_RADIUS) {
+          if (distToNode < BOSS_PATTERN_NODE_RADIUS) {
             // Hit the checkpoint!
+            triggerSlashEffect();
             playSfx('slash');
             const nextProgress = patternProgress + 1;
             setPatternProgress(nextProgress);
@@ -666,67 +780,86 @@ export default function GameScreen({ character, questId, onFail }: { character: 
           }
         }
         
-        // Show slash trail visual but NO damage to boss from normal swipe
-        const slashAngle = Math.atan2(dy, dx) * (180 / Math.PI);
-        const newSlash2 = { id: Date.now() + Math.random(), x: lastX, y: lastY, length: dist, angle: slashAngle };
-        setSlashes(prev => [...prev.slice(-10), newSlash2]);
-        setTimeout(() => setSlashes(prev => prev.filter(s => s.id !== newSlash2.id)), 200);
-        
         lastPosRef.current = { x: currentX, y: currentY };
         return; // Skip normal enemy hit detection during boss fight
       }
 
-      // === NORMAL ENEMY HIT DETECTION (no boss on field) ===
-      for (const enemy of enemies) {
-          const lastHit = (enemy as any).lastHitAt || 0;
-          if (hitEnemiesRef.current.has(enemy.id) && now - lastHit < 100) continue;
+      // === NORMAL ENEMY PATTERN HIT DETECTION ===
+      let anyMinionPatternHit = false;
+      setEnemies(prev => {
+        let changed = false;
+        const updated = prev.map(enemy => {
+          if (enemy.isBoss || !enemy.pattern) return enemy;
+          const progress = enemy.patternProgress || 0;
+          const nextNode = enemy.pattern.nodes[progress];
+          if (!nextNode) return enemy;
 
-          const distToPath = getDistToSegment(enemy.x, enemy.y, lastX, lastY, currentX, currentY);
-          if (distToPath < (enemy.size / 2) + 50) {
-              hitAny = true;
+          // Calculate absolute position of the pattern node
+          const nodeAbsX = enemy.x + nextNode.dx;
+          const nodeAbsY = enemy.y + nextNode.dy;
+          const distToNode = Math.sqrt(
+            (currentX - nodeAbsX) ** 2 + (currentY - nodeAbsY) ** 2
+          );
+
+          if (distToNode < MINION_PATTERN_NODE_RADIUS) {
+            changed = true;
+            anyMinionPatternHit = true;
+            triggerSlashEffect();
+            const nextProgress = progress + 1;
+            
+            // Burst at checkpoint
+            const bId = Date.now() + Math.random();
+            setBursts(b => [...b, { id: bId, x: nodeAbsX, y: nodeAbsY }]);
+            setTimeout(() => setBursts(b => b.filter(i => i.id !== bId)), 400);
+            playSfx('slash');
+
+            // Check if pattern is complete => KILL
+            if (nextProgress >= enemy.pattern.nodes.length) {
+              // Mark for removal
               hitEnemiesRef.current.add(enemy.id);
-              
-              const bId = Date.now() + Math.random();
-              setBursts(b => [...b, { id: bId, x: enemy.x, y: enemy.y }]);
-              setTimeout(() => setBursts(b => b.filter(i => i.id !== bId)), 800);
-
-              hitList.push(enemy.id.toString());
-              localKills++;
-              coinsEarned += 10;
+              const killBId = Date.now() + Math.random();
+              setBursts(b => [...b, { id: killBId, x: enemy.x, y: enemy.y }]);
+              setTimeout(() => setBursts(b => b.filter(i => i.id !== killBId)), 800);
+              return { ...enemy, patternProgress: nextProgress };
+            }
+            return { ...enemy, patternProgress: nextProgress };
           }
-      }
-
-      if (hitAny) {
-          setEnemies(prev => {
-              const remaining: any[] = [];
-              for (const e of prev) {
-                  if (!hitList.includes(e.id.toString())) {
-                      remaining.push(e);
-                  }
-              }
-              return remaining;
-          });
-
-          if (localKills > 0) setTotalKills(prev => prev + localKills);
-          if (coinsEarned > 0) {
-              const totalCoins = Math.ceil(coinsEarned * (character.coinMultiplier || 1));
-              addCoins(totalCoins);
-              setUltimateEnergy(prev => Math.min(100, prev + 2));
+          return enemy;
+        });
+        if (!changed) return prev;
+        
+        // Remove completed enemies & count kills
+        const remaining: typeof prev = [];
+        let kills = 0;
+        let earned = 0;
+        for (const e of updated) {
+          if (!e.isBoss && e.pattern && (e.patternProgress || 0) >= e.pattern.nodes.length) {
+            kills++;
+            earned += 10;
+          } else {
+            remaining.push(e);
           }
-          
+        }
+        if (kills > 0) {
+          setTotalKills(prev => prev + kills);
+          const totalCoins = Math.ceil(earned * (character.coinMultiplier || 1));
+          addCoins(totalCoins);
+          setUltimateEnergy(prev => Math.min(100, prev + 2 * kills));
           handleAction();
           setShake({ x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 });
           setTimeout(() => setShake({ x: 0, y: 0 }), 50);
-      } else {
-        playSfx('slash');
-      }
+        }
+        return remaining;
+      });
+
+      // Removed air-slash sound block per user request "only on hit"
       
       lastPosRef.current = { x: currentX, y: currentY };
     }
   };
 
   const handlePointerUp = () => {
-    // === PATTERN FAILURE CHECK ===
+    // === BOSS PATTERN FAILURE CHECK ===
     const hasBossOnField = enemies.some(e => e.isBoss);
     if (hasBossOnField && activePattern && patternProgress > 0 && patternProgress < activePattern.nodes.length) {
       // Player started pattern but didn't finish - COUNTER ATTACK!
@@ -746,6 +879,16 @@ export default function GameScreen({ character, questId, onFail }: { character: 
         setShowPatternIntro(true);
         setTimeout(() => setShowPatternIntro(false), 1500);
       }, 1000);
+    }
+
+    // === MINION PATTERN RESET on pointer up (no penalty, just reset progress) ===
+    if (!hasBossOnField) {
+      setEnemies(prev => prev.map(e => {
+        if (!e.isBoss && e.pattern && (e.patternProgress || 0) > 0 && (e.patternProgress || 0) < e.pattern.nodes.length) {
+          return { ...e, patternProgress: 0 };
+        }
+        return e;
+      }));
     }
     
     isSwipingRef.current = false;
@@ -925,6 +1068,73 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                   />
                 )}
               </div>
+
+              {/* === MINION PATTERN GUIDE === */}
+              {!enemy.isBoss && enemy.pattern && (
+                <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" style={{ left: 0, top: 0 }}>
+                  {/* Connection lines between pattern nodes */}
+                  {enemy.pattern.nodes.map((node, i) => {
+                    if (i === 0) return null;
+                    const prev = enemy.pattern!.nodes[i - 1];
+                    const progress = enemy.patternProgress || 0;
+                    const isCompleted = i <= progress;
+                    return (
+                      <line
+                        key={`mline-${enemy.id}-${i}`}
+                        x1={enemy.size / 2 + prev.dx}
+                        y1={enemy.size / 2 + prev.dy}
+                        x2={enemy.size / 2 + node.dx}
+                        y2={enemy.size / 2 + node.dy}
+                        stroke={isCompleted ? '#34d399' : 'rgba(255,255,255,0.35)'}
+                        strokeWidth={isCompleted ? '3' : '2'}
+                        strokeDasharray={isCompleted ? 'none' : '6 4'}
+                        className={isCompleted ? 'drop-shadow-[0_0_6px_rgba(52,211,153,0.8)]' : ''}
+                      />
+                    );
+                  })}
+                  {/* Checkpoint nodes */}
+                  {enemy.pattern.nodes.map((node, i) => {
+                    const progress = enemy.patternProgress || 0;
+                    const isCompleted = i < progress;
+                    const isNext = i === progress;
+                    return (
+                      <g key={`mnode-${enemy.id}-${i}`}>
+                        {isNext && (
+                          <circle
+                            cx={enemy.size / 2 + node.dx}
+                            cy={enemy.size / 2 + node.dy}
+                            r="22"
+                            fill="none"
+                            stroke="rgba(52,211,153,0.5)"
+                            strokeWidth="2"
+                            className="animate-ping"
+                          />
+                        )}
+                        <circle
+                          cx={enemy.size / 2 + node.dx}
+                          cy={enemy.size / 2 + node.dy}
+                          r={isNext ? '12' : '8'}
+                          fill={isCompleted ? '#34d399' : isNext ? 'rgba(52,211,153,0.7)' : 'rgba(255,255,255,0.2)'}
+                          stroke={isCompleted ? '#34d399' : isNext ? '#34d399' : 'rgba(255,255,255,0.4)'}
+                          strokeWidth="2"
+                          className={isCompleted ? 'drop-shadow-[0_0_8px_rgba(52,211,153,1)]' : ''}
+                        />
+                        <text
+                          x={enemy.size / 2 + node.dx}
+                          y={enemy.size / 2 + node.dy}
+                          dy="4"
+                          textAnchor="middle"
+                          fill={isCompleted ? '#000' : '#fff'}
+                          fontSize="10"
+                          fontWeight="900"
+                        >
+                          {i + 1}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -1093,7 +1303,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
             <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full px-4">
               <div className="flex flex-col items-center justify-center">
                 <p className="text-cyan-300 font-bold text-sm tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] opacity-90 uppercase">
-                  {activePattern.icon} TARGET SKILL: {activePattern.name}
+                  {activePattern.icon} TARGET SKILL: {t.game.patterns[activePattern.name as keyof typeof t.game.patterns] || activePattern.name}
                 </p>
                 <div className="flex gap-1.5 justify-center mt-2">
                   {activePattern.nodes.map((_, i) => (
@@ -1145,12 +1355,54 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                 </p>
                 <div className="bg-black/40 backdrop-blur-sm px-6 py-3 rounded-xl border border-cyan-400/30 inline-block">
                   <p className="text-cyan-300 text-2xl font-black">
-                    {activePattern.icon} {activePattern.name} {activePattern.icon}
+                    {activePattern.icon} {t.game.patterns[activePattern.name as keyof typeof t.game.patterns] || activePattern.name} {activePattern.icon}
                   </p>
                   <p className="text-white/60 text-xs mt-1 font-bold">
                     SWIPE THROUGH {activePattern.nodes.length} CHECKPOINTS IN ORDER
                   </p>
                 </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Boss Warning Overlay */}
+        <AnimatePresence>
+          {showBossWarning && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[65] pointer-events-none flex items-center justify-center bg-red-900/10"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+                className="text-center"
+              >
+                <div className="flex items-center gap-4 bg-black/60 backdrop-blur-md px-10 py-5 border-y-4 border-red-600 skew-x-[-15deg] shadow-[0_0_40px_rgba(239,68,68,0.4)]">
+                  <AlertTriangle className="w-12 h-12 text-red-500 animate-pulse" />
+                  <div className="text-left">
+                    <h2 className="text-red-500 font-black text-5xl md:text-6xl italic tracking-tighter drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] leading-none">
+                      BOSS INCOMING
+                    </h2>
+                    <p className="text-white font-black text-sm tracking-[0.3em] opacity-90 uppercase mt-2">
+                      {50 - (totalKills % 50)} KILLS UNTIL BOSS SPAWN
+                    </p>
+                  </div>
+                  <AlertTriangle className="w-12 h-12 text-red-500 animate-pulse" />
+                </div>
+                <motion.div 
+                  className="mt-4 h-1 bg-red-600/50 rounded-full overflow-hidden"
+                  initial={{ width: 0 }}
+                  animate={{ width: '100%' }}
+                >
+                  <motion.div 
+                    className="h-full bg-red-400"
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  />
+                </motion.div>
               </motion.div>
             </motion.div>
           )}
