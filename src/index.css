@@ -31,6 +31,28 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  @keyframes premium-glow {
+    0%, 100% { filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.4)) brightness(1); }
+    50% { filter: drop-shadow(0 0 20px rgba(250, 204, 21, 0.8)) brightness(1.2); }
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) skewX(-20deg); }
+    100% { transform: translateX(200%) skewX(-20deg); }
+  }
+  .animate-premium-glow {
+    animation: premium-glow 3s infinite ease-in-out;
+  }
+  .shimmer-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer-effect::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2.5s infinite;
+  }
 }
 
 body {

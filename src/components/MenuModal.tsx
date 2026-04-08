@@ -1,167 +1,119 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { X, Gift, Crown, Wallet, Globe, Shield, Zap, Star } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { useAudio } from '../contexts/AudioContext';
-
-type TabType = 'fund' | 'welfare' | 'exchange';
 
 interface MenuModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab: TabType;
 }
 
-const TabButton = ({ active, text, onClick }: { active: boolean, text: string, onClick: () => void }) => (
-  <button 
-    onClick={onClick}
-    className={`px-4 py-2 md:px-6 md:py-3 font-black italic text-sm md:text-lg transition-all transform -skew-x-12 ${
-      active 
-        ? 'bg-yellow-400 text-black border-b-4 border-yellow-600' 
-        : 'text-white/40 hover:text-white hover:bg-white/5 grayscale'
-    }`}
-  >
-    <span className="transform skew-x-12 block">{text}</span>
-  </button>
-);
-
-
-
-export default function MenuModal({ isOpen, onClose, initialTab }: MenuModalProps) {
+export default function MenuModal({ isOpen, onClose }: MenuModalProps) {
   const { t } = useLanguage();
-  const { playSfx } = useAudio();
-  const { addCoins, addGems } = useCurrency();
-  const [activeTab, setActiveTab] = React.useState<TabType>(initialTab);
-
-  React.useEffect(() => {
-    if (isOpen) setActiveTab(initialTab);
-  }, [isOpen, initialTab]);
+  const { coins, addCoins } = useCurrency();
 
   if (!isOpen) return null;
 
-  const handleBuy = (gems: number, coins: number) => {
-    addGems(gems);
-    addCoins(coins);
-    playSfx('powerup');
-  };
-
-  const renderContent = () => {
-    switch (activeTab) {
-
-      case 'fund':
-        return (
-          <div className="flex flex-col items-center justify-center h-48 space-y-4 opacity-50">
-            <div className="w-16 h-16 border-4 border-dashed border-indigo-400 rounded-full animate-spin-slow"></div>
-            <p className="font-black italic text-indigo-200">DAO LEVEL FUND IN PROGRESS...</p>
-          </div>
-        );
-      case 'welfare':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div className="bg-gradient-to-br from-emerald-600 to-teal-400 p-4 rounded-2xl border-2 border-emerald-300 shadow-lg relative overflow-hidden group">
-                <div className="relative z-10">
-                  <h4 className="font-black italic text-white text-lg">DAILY GIFT</h4>
-                  <p className="text-white/80 text-xs mb-4">Claimed every 24h</p>
-                  <button onClick={() => handleBuy(0, 50)} className="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-emerald-50 transition-colors">CLAIM 50 🪙</button>
-                </div>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 -rotate-45 translate-x-12 -translate-y-8 group-hover:scale-110 transition-transform"></div>
-             </div>
-             <div className="bg-gradient-to-br from-yellow-500 to-orange-400 p-4 rounded-2xl border-2 border-yellow-300 shadow-lg relative overflow-hidden group">
-                <div className="relative z-10">
-                   <h4 className="font-black italic text-white text-lg italic">PREMIUM PASS</h4>
-                   <p className="text-white/80 text-xs mb-4">Double rewards for 30d</p>
-                   <button className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm">ACTIVATE</button>
-                </div>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 -rotate-45 translate-x-12 -translate-y-8 group-hover:scale-110 transition-transform"></div>
-             </div>
-          </div>
-        );
-      case 'exchange':
-        return (
-          <div className="bg-indigo-950/50 p-6 rounded-2xl border-2 border-dashed border-indigo-500/50 text-center space-y-6">
-            <div className="flex items-center justify-center gap-4">
-              <div className="w-12 h-12 bg-red-500 rotate-45 border-2 border-white shadow-[0_0_10px_red]"></div>
-              <div className="text-2xl text-white">➜</div>
-              <div className="w-12 h-12 bg-yellow-400 rounded-full border-2 border-white shadow-[0_0_10px_yellow]"></div>
-            </div>
-            <p className="text-indigo-300 text-sm font-medium">10 GEMS = 100 COINS</p>
-            <button className="w-full bg-indigo-600 py-3 rounded-xl font-black italic text-white border-b-4 border-indigo-900 active:translate-y-1 active:border-none">EXCHANGE RESOURCES</button>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-auto">
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/60 backdrop-blur-md"
-      />
-      
-      <motion.div
-        initial={{ scale: 0.9, y: 50, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.9, y: 50, opacity: 0 }}
-        className="relative w-full max-w-2xl bg-white/10 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden"
-      >
-        <div className="bg-white/5 p-6 border-b border-white/10 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2 bg-white/5"></div>
-          <div className="flex items-center justify-between relative z-10">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-black italic text-white tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] uppercase">
-                {t.lobby.enterDojo}
-              </h2>
-              <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-1">NINJA ARSENAL & LOGISTICS</p>
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[100] pointer-events-auto">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="relative w-full max-w-lg bg-[#edeeef] rounded-[2rem] shadow-2xl overflow-hidden"
+        >
+          {/* Top Bar Navigation */}
+          <div className="bg-white px-8 py-6 flex items-center justify-between border-b-2 border-zinc-200">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 bg-[#bb152c] rounded-xl flex items-center justify-center shadow-[0_4px_0_0_#92001c]">
+                <Shield className="text-white w-6 h-6" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <span className="text-[10px] font-black text-[#bb152c] tracking-widest uppercase mb-0.5 opacity-60">
+                  {t.menu.daoFund}
+                </span>
+                <h2 className="font-headline font-black text-zinc-900 text-xl uppercase tracking-tighter">
+                  {t.menu.arsenalLogistics}
+                </h2>
+              </div>
             </div>
-            <button 
-              onClick={onClose}
-              className="w-10 h-10 md:w-12 md:h-12 bg-red-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all group"
-            >
-              <span className="text-white font-black text-xl md:text-2xl transform group-hover:rotate-90 transition-transform">✕</span>
+            <button onClick={onClose} className="p-3 bg-zinc-100 hover:bg-zinc-200 rounded-full transition-colors">
+              <X className="w-6 h-6 text-zinc-400" />
             </button>
           </div>
-          
-          {/* Decorative Studs */}
-          <div className="absolute top-4 left-4 w-3 h-3 rounded-full bg-white/10 shadow-inner"></div>
-          <div className="absolute bottom-4 right-4 w-3 h-3 rounded-full bg-white/5 shadow-inner"></div>
-        </div>
 
-        <div className="flex overflow-x-auto no-scrollbar bg-white/5 backdrop-blur-sm border-b border-white/10">
+          <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+            {/* Daily Gift Card */}
+            <div className="bg-white rounded-3xl p-6 shadow-[0_8px_0_0_#d1d5db] border-2 border-transparent hover:border-[#bb152c] transition-all group">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Gift className="w-10 h-10 text-emerald-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-headline font-black text-xl text-zinc-900 uppercase">{t.menu.dailyGift}</h3>
+                  <p className="text-sm font-bold text-zinc-400">{t.menu.claimed24h}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => { addCoins(50); onClose(); }}
+                className="w-full mt-6 bg-[#bb152c] py-4 rounded-xl shadow-[0_4px_0_0_#92001c] active:translate-y-1 active:shadow-none transition-all"
+              >
+                <span className="font-headline font-black text-white text-lg uppercase tracking-widest">{t.menu.claim50}</span>
+              </button>
+            </div>
 
-          <TabButton active={activeTab === 'fund'} text={t.lobby.menuFund} onClick={() => setActiveTab('fund')} />
-          <TabButton active={activeTab === 'welfare'} text={t.lobby.menuWelfare} onClick={() => setActiveTab('welfare')} />
-          <TabButton active={activeTab === 'exchange'} text={t.lobby.menuExchange} onClick={() => setActiveTab('exchange')} />
-        </div>
+            {/* Premium Pass Card */}
+            <div className="relative group overflow-hidden bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-black rounded-3xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.6)] border-2 border-amber-400/50 hover:border-amber-400 transition-all duration-500 animate-premium-glow">
+              {/* Animated sparkle particles */}
+              <div className="absolute inset-0 pointer-events-none opacity-50">
+                <motion.div animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity, delay: 0.5 }} className="absolute top-4 left-10 text-amber-400"><Star size={12} fill="currentColor" /></motion.div>
+                <motion.div animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} className="absolute bottom-10 right-10 text-amber-400"><Star size={8} fill="currentColor" /></motion.div>
+                <motion.div animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5] }} transition={{ duration: 2.5, repeat: Infinity }} className="absolute top-1/2 left-1/4 text-white"><Star size={6} fill="currentColor" /></motion.div>
+              </div>
 
-        {/* Content Body */}
-        <div className="p-6 md:p-10 relative">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+              <div className="relative z-10 flex items-center gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-300 to-amber-600 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.4)] group-hover:scale-110 transition-transform duration-500">
+                  <Crown className="w-12 h-12 text-black drop-shadow-lg" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-headline font-black text-2xl text-amber-400 uppercase tracking-tight drop-shadow-sm">{t.menu.premiumPass}</h3>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="text-amber-400"><Star size={14} /></motion.div>
+                  </div>
+                  <p className="text-sm font-bold text-zinc-300 leading-tight">{t.menu.doubleRewards}</p>
+                </div>
+              </div>
 
-        <div className="bg-black/20 px-8 py-4 flex justify-between items-center border-t border-white/5">
-          <div className="flex gap-2">
-             <div className="w-2 h-2 rounded-full bg-white/20 animate-pulse"></div>
-             <div className="w-2 h-2 rounded-full bg-white/10"></div>
-             <div className="w-2 h-2 rounded-full bg-white/5"></div>
+              <button className="shimmer-effect relative w-full mt-6 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 py-4 rounded-xl shadow-[0_6px_0_0_#b45309] active:translate-y-1 active:shadow-none hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all duration-300 overflow-hidden">
+                <span className="relative z-10 font-headline font-black text-black text-lg uppercase tracking-widest">{t.menu.activate}</span>
+              </button>
+            </div>
+
+            {/* Resource Exchange */}
+            <div className="bg-white rounded-3xl p-6 shadow-[0_8px_0_0_#d1d5db]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Star className="text-yellow-500 w-5 h-5 fill-yellow-500" />
+                  <span className="font-black text-zinc-900">{t.menu.exchangePrompt}</span>
+                </div>
+              </div>
+              <button className="w-full bg-zinc-100 py-4 rounded-xl border-2 border-zinc-200 hover:bg-zinc-200 transition-colors">
+                <span className="font-headline font-black text-zinc-500 text-sm uppercase tracking-widest">
+                  {t.menu.exchangeBtn}
+                </span>
+              </button>
+            </div>
           </div>
-          <span className="text-[10px] text-white/20 font-black tracking-widest uppercase italic">NINJA-BRICK SUPREME EDITION</span>
-        </div>
-      </motion.div>
-    </div>
+          
+          {/* Stud Details */}
+          <div className="absolute top-10 left-6 w-4 h-4 rounded-full bg-black/5 shadow-inner" />
+          <div className="absolute top-10 right-6 w-4 h-4 rounded-full bg-black/5 shadow-inner" />
+          <div className="absolute bottom-6 left-6 w-4 h-4 rounded-full bg-black/5 shadow-inner" />
+          <div className="absolute bottom-6 right-6 w-4 h-4 rounded-full bg-black/5 shadow-inner" />
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 }

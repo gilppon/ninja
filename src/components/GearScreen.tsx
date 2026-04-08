@@ -8,14 +8,24 @@ import { Sparkles, Shield, Sword, Zap } from 'lucide-react';
 
 export default function GearScreen({ selectedChar }: { selectedChar: Character }) {
   const { t } = useLanguage();
-  const { purchasedItems, equippedItem, equipItem } = useInventory();
+  const { purchasedItems, itemCounts, equippedItem, equipItem } = useInventory();
   const items = useItems();
 
   const myGear = items.filter(item => purchasedItems.includes(item.id));
   const activeItem = items.find(i => i.id === equippedItem);
+  const activeLevel = activeItem ? (itemCounts[activeItem.id] || 0) : 0;
+
+  const charStyles: Record<string, { color: string; shadow: string }> = {
+    MASTER: { color: 'bg-purple-500', shadow: 'from-purple-900 to-purple-600' },
+    JADE:   { color: 'bg-emerald-500', shadow: 'from-emerald-900 to-emerald-600' },
+    FLAME:  { color: 'bg-orange-500', shadow: 'from-orange-900 to-orange-600' },
+    ICE:    { color: 'bg-cyan-500', shadow: 'from-cyan-900 to-cyan-600' },
+    THUNDER:{ color: 'bg-yellow-500', shadow: 'from-yellow-900 to-yellow-600' },
+  };
+  const style = charStyles[selectedChar.name] ?? { color: 'bg-slate-500', shadow: 'from-slate-900 to-slate-600' };
 
   return (
-    <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto min-h-[100dvh] bg-transparent">
+    <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto h-[100dvh] overflow-y-auto bg-transparent">
       <div className="mb-8 relative">
         <div className="inline-block bg-gradient-to-r from-[#bb152c] to-orange-500 px-6 py-2 rounded-lg transform -rotate-1 shadow-[4px_4px_0_0_#92001c] mb-8">
           <h2 className="text-white font-black text-2xl tracking-tight uppercase italic">{t.gear.title}</h2>
@@ -28,8 +38,8 @@ export default function GearScreen({ selectedChar }: { selectedChar: Character }
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
             {/* Character Side */}
             <div className="relative group">
-              <div className={`absolute inset-0 rounded-full blur-3xl opacity-20 ${selectedChar.color}`} />
-              <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full bg-gradient-to-b ${selectedChar.shadow} border-4 border-white/20 p-4 relative overflow-hidden shadow-2xl`}>
+              <div className={`absolute inset-0 rounded-full blur-3xl opacity-20 ${style.color}`} />
+              <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full bg-gradient-to-b ${style.shadow} border-4 border-white/20 p-4 relative overflow-hidden shadow-2xl`}>
                 <motion.img 
                   src={selectedChar.img} 
                   alt="ninja"
@@ -56,11 +66,11 @@ export default function GearScreen({ selectedChar }: { selectedChar: Character }
                  </div>
                  <div>
                     <h3 className="text-white font-black text-2xl uppercase italic leading-tight">
-                      {activeItem ? activeItem.title : "NO WEAPON"}
+                      {activeItem ? `${activeItem.title} Lv.${activeLevel}` : t.gear.noWeapon}
                     </h3>
                     <div className="flex items-center gap-2">
                        <span className={`w-2 h-2 rounded-full ${activeItem ? 'bg-green-400 animate-pulse' : 'bg-zinc-500'}`} />
-                       <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">{activeItem ? 'Equipped & Ready' : 'Awaiting Selection'}</span>
+                       <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">{activeItem ? t.gear.statusReady : t.gear.statusAwaiting}</span>
                     </div>
                  </div>
               </div>
@@ -73,12 +83,12 @@ export default function GearScreen({ selectedChar }: { selectedChar: Character }
                    className="mt-6 grid grid-cols-2 gap-4"
                  >
                     <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                       <p className="text-white/30 text-[10px] font-black uppercase mb-1">{t.shop.features}</p>
-                       <p className="text-white font-bold text-xs">{activeItem.features[0]}</p>
+                       <p className="text-white/30 text-[10px] font-black uppercase mb-1">{t.gear.rarityLabel}</p>
+                       <p className={`font-black text-xs uppercase ${activeItem.color.replace('bg-', 'text-')}`}>{activeItem.rarity}</p>
                     </div>
                     <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                       <p className="text-white/30 text-[10px] font-black uppercase mb-1">Rarity</p>
-                       <p className={`font-black text-xs uppercase ${activeItem.color.replace('bg-', 'text-')}`}>{activeItem.rarity}</p>
+                       <p className="text-white/30 text-[10px] font-black uppercase mb-1">{t.gear.bonusLabel}</p>
+                       <p className="text-blue-400 font-black text-xs">+{Math.round((activeLevel - 1))}%</p>
                     </div>
                  </motion.div>
               )}
@@ -97,6 +107,7 @@ export default function GearScreen({ selectedChar }: { selectedChar: Character }
             <GearItem 
               key={item.id}
               item={item}
+              level={itemCounts[item.id] || 0}
               isEquipped={equippedItem === item.id}
               onEquip={() => equipItem(item.id)}
             />
@@ -110,11 +121,12 @@ export default function GearScreen({ selectedChar }: { selectedChar: Character }
 interface GearItemProps {
   key?: React.Key;
   item: Item;
+  level: number;
   isEquipped: boolean;
   onEquip: () => void;
 }
 
-function GearItem({ item, isEquipped, onEquip }: GearItemProps) {
+function GearItem({ item, level, isEquipped, onEquip }: GearItemProps) {
   const { t } = useLanguage();
   const isSpecial = item.rarity === t.shop.rarity.LEGENDARY || item.rarity === t.shop.rarity.EPIC;
 
@@ -153,7 +165,10 @@ function GearItem({ item, isEquipped, onEquip }: GearItemProps) {
       <div className="mt-6 flex flex-col gap-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-headline font-black text-2xl text-white uppercase drop-shadow-sm">{item.title}</h3>
+            <h3 className="font-headline font-black text-2xl text-white uppercase drop-shadow-sm flex items-center gap-3">
+              {item.title}
+              <span className="text-blue-400 text-sm">Lv.{level}</span>
+            </h3>
             <p className="text-white/60 font-bold text-sm mb-2">{item.desc}</p>
             <div className="mt-3 bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
               <h4 className="text-xs font-black text-white/40 uppercase tracking-wider mb-2">{t.shop.features}</h4>
@@ -165,6 +180,12 @@ function GearItem({ item, isEquipped, onEquip }: GearItemProps) {
                   </li>
                 ))}
               </ul>
+              {level > 1 && (
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <p className="text-[10px] font-black text-blue-400/60 uppercase tracking-widest">{t.gear.bonusLabel}</p>
+                  <p className="text-blue-400 font-black text-sm">ALL STATS +{Math.round((level - 1))}%</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

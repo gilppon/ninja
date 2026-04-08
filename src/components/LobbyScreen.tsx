@@ -5,8 +5,7 @@ import { useAudio } from '../contexts/AudioContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { CHARACTERS } from '../constants/characters';
 import { useAuth } from '../contexts/AuthContext';
-
-
+import { Star } from 'lucide-react';
 
 const CyberMenuButton = ({ text, highlight, onClick, delay, hotEventText }: { text: string, highlight?: boolean, onClick: () => void, delay: number, hotEventText?: string }) => (
   <motion.button 
@@ -30,7 +29,7 @@ const CyberMenuButton = ({ text, highlight, onClick, delay, hotEventText }: { te
         {text}
       </span>
       {highlight && (
-        <span className="text-[8px] md:text-[10px] text-white bg-black px-1.5 py-0.5 transform -skew-x-[10deg] absolute -top-3 right-0 border border-yellow-400">{hotEventText || 'HOT EVENT'}</span>
+        <span className="text-[8px] md:text-[10px] text-white bg-black px-1.5 py-0.5 transform -skew-x-[10deg] absolute -top-3 right-0 border border-yellow-400">{hotEventText}</span>
       )}
     </div>
   </motion.button>
@@ -49,30 +48,9 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selecte
   const { addCoins } = useCurrency();
   const { playSfx } = useAudio();
   const { user } = useAuth();
-  const [showMenu, setShowMenu] = React.useState(false);
 
   const characters = CHARACTERS;
   const activeChar = characters[selectedChar];
-
-
-
-  const { playSfx: playSfxAudio, toggleMusic, isPlaying } = useAudio();
-
-  const handleNext = () => {
-    playSfx('select');
-    const nextIdx = (selectedChar + 1) % CHARACTERS.length;
-    setSelectedChar(nextIdx);
-  };
-
-  const handlePrev = () => {
-    playSfx('select');
-    const prevIdx = (selectedChar - 1 + CHARACTERS.length) % CHARACTERS.length;
-    setSelectedChar(prevIdx);
-  };
-
-
-
-
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 font-sans pb-24">
@@ -96,24 +74,19 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selecte
         ))}
       </div>
 
-
-
-      {/* Left utility menus removed for simplicity */}
-
-      {/* Central Character Carousel - Pushed up slightly to avoid BottomNav interference */}
+      {/* Central Character Carousel */}
       <div className="absolute top-[45%] md:top-1/2 left-0 right-0 -translate-y-1/2 flex items-center justify-start md:justify-center gap-6 md:gap-6 overflow-x-auto md:overflow-visible px-[25vw] md:px-4 pointer-events-auto h-[450px] md:h-[550px] z-30 ml-0 md:ml-40 snap-x snap-mandatory scrollbar-hide touch-pan-x">
         {characters.map((char, i) => {
           const isActive = selectedChar === i;
+          const charLang = t.characters[char.name as keyof typeof t.characters];
           return (
             <motion.div
               key={char.name}
               onClick={() => { 
                 playSfx('select'); 
-                if (char.premium && !user) {
+                if (!isActive) {
                   setSelectedChar(i);
-                  onShowLogin();
                 } else {
-                  setSelectedChar(i);
                   onPlayDirect('q1');
                 }
               }}
@@ -122,11 +95,18 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selecte
             >
               <div className={`w-full h-full transform -skew-x-[10deg] overflow-hidden border-[3px] ${isActive ? 'border-yellow-300 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : 'border-cyan-400/20 md:group-hover:border-cyan-400/50'} flex flex-col justify-end relative bg-slate-900`}>
                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
-                 <img src={char.img} className="absolute inset-0 w-[140%] h-[140%] md:w-[180%] md:h-[180%] object-cover object-top -translate-y-1 md:-translate-y-2 -translate-x-[15%] md:-translate-x-[20%]" alt={char.name} referrerPolicy="no-referrer" />
+                 <img src={char.img} className="absolute inset-0 w-[140%] h-[140%] md:w-[180%] md:h-[180%] object-cover object-top -translate-y-2 -translate-x-[15%] md:-translate-x-[20%]" alt={char.name} referrerPolicy="no-referrer" />
                  
-                 <div className={`absolute bottom-0 w-full z-20 py-3 flex items-center justify-center border-t-2 ${isActive ? 'bg-zinc-950 border-yellow-400' : 'bg-black/80 border-cyan-400/30'}`}>
+                 <div className={`absolute bottom-0 w-full z-20 py-3 flex flex-col items-center justify-center border-t-2 ${isActive ? 'bg-zinc-950 border-yellow-400' : 'bg-black/80 border-cyan-400/30'}`}>
+                    {char.price > 0 && (
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 px-3 py-0.5 rounded-full shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-premium-glow flex items-center gap-1 border border-white/20">
+                         <Star size={8} fill="black" className="text-black" />
+                         <span className="text-[9px] font-black text-black tracking-widest leading-none">PREMIUM</span>
+                         <Star size={8} fill="black" className="text-black" />
+                      </div>
+                    )}
                     <span className={`font-black italic tracking-widest text-base ${isActive ? 'text-white' : 'text-cyan-200'}`}>
-                      {t.characters[char.name as keyof typeof t.characters]?.role || char.role}
+                      {charLang?.role || char.name}
                     </span>
                  </div>
               </div>
@@ -141,112 +121,40 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selecte
         })}
       </div>
 
-      {/* Info Display - Character Details & Passive Skills */}
+      {/* Info Display */}
       <div className="absolute bottom-40 md:bottom-32 left-6 md:left-12 flex flex-col gap-2 font-mono pointer-events-none drop-shadow-md z-40 max-w-[300px] md:max-w-md">
          <motion.div key={`tactics-${activeChar.name}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-           {/* Character Name & Role Header */}
-           <div className="flex items-center gap-2 mb-1.5">
-             <div className="text-yellow-400 font-bold uppercase tracking-widest text-xs md:text-sm flex items-center">
-               <div className="w-2 h-2 bg-yellow-400 mr-2 transform rotate-45" />
-               {t.characters[activeChar.name as keyof typeof t.characters]?.role || activeChar.role} {t.lobby.tactics}
-             </div>
-             {activeChar.premium && (
-               <span className="text-[9px] md:text-[10px] font-black tracking-widest text-yellow-900 bg-gradient-to-r from-yellow-400 to-amber-300 px-2 py-0.5 rounded-sm shadow-[0_0_8px_rgba(250,204,21,0.4)]">
-                 PREMIUM
-               </span>
-             )}
-           </div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="text-yellow-400 font-bold uppercase tracking-widest text-xs md:text-sm flex items-center">
+                <div className="w-2 h-2 bg-yellow-400 mr-2 transform rotate-45" />
+                {t.characters[activeChar.name as keyof typeof t.characters]?.role} {t.lobby.tactics}
+              </div>
+            </div>
 
-           {/* Description Box */}
-           <div className="text-cyan-50 text-[10px] md:text-xs leading-relaxed uppercase bg-cyan-900/40 p-3 border-l-4 border-cyan-400 backdrop-blur-sm shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-             {t.characters[activeChar.name as keyof typeof t.characters]?.description || activeChar.description}
-           </div>
+            <div className="text-cyan-50 text-[10px] md:text-xs leading-relaxed uppercase bg-cyan-900/40 p-3 border-l-4 border-cyan-400 backdrop-blur-sm shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+              {t.characters[activeChar.name as keyof typeof t.characters]?.description}
+            </div>
 
-           {/* Passive Skill Section */}
-           <motion.div 
-             initial={{ opacity: 0, x: -10 }} 
-             animate={{ opacity: 1, x: 0 }} 
-             transition={{ delay: 0.15, duration: 0.3 }}
-             className="mt-2"
-           >
-             {activeChar.passiveDescription ? (
-               <div className={`relative p-2.5 md:p-3 border rounded-sm backdrop-blur-sm ${
-                 activeChar.ultimateType === 'flame' 
-                   ? 'bg-red-950/50 border-red-500/40 shadow-[0_0_12px_rgba(239,68,68,0.15)]' 
-                   : activeChar.ultimateType === 'ice'
-                   ? 'bg-cyan-950/50 border-cyan-400/40 shadow-[0_0_12px_rgba(34,211,238,0.15)]'
-                   : 'bg-yellow-950/50 border-yellow-400/40 shadow-[0_0_12px_rgba(250,204,21,0.15)]'
-               }`}>
-                 <div className="flex items-center gap-1.5 mb-1.5">
-                   <span className={`text-[9px] md:text-[10px] font-black tracking-[0.2em] ${
-                     activeChar.ultimateType === 'flame' ? 'text-red-400' 
-                     : activeChar.ultimateType === 'ice' ? 'text-cyan-400' 
-                     : 'text-yellow-400'
-                   }`}>
-                     ◆ PASSIVE SKILL
-                   </span>
-                 </div>
-                 <div className={`text-xs md:text-sm font-black italic tracking-wider ${
-                   activeChar.ultimateType === 'flame' ? 'text-orange-300' 
-                   : activeChar.ultimateType === 'ice' ? 'text-cyan-200' 
-                   : 'text-yellow-200'
-                 }`}>
-                   {activeChar.passiveDescription}
-                 </div>
-                 
-                 {/* Specific stat highlights */}
-                 <div className="flex flex-wrap gap-1.5 mt-2">
-                   {activeChar.coinMultiplier && activeChar.coinMultiplier > 1 && (
-                     <span className="text-[9px] md:text-[10px] font-bold text-yellow-300 bg-yellow-400/10 border border-yellow-500/30 px-1.5 py-0.5 rounded-sm">
-                       💰 COIN ×{activeChar.coinMultiplier}
-                     </span>
-                   )}
-                   {activeChar.comboGracePeriod && activeChar.comboGracePeriod > 1500 && (
-                     <span className="text-[9px] md:text-[10px] font-bold text-cyan-300 bg-cyan-400/10 border border-cyan-500/30 px-1.5 py-0.5 rounded-sm">
-                       ⏱ COMBO {(activeChar.comboGracePeriod / 1000).toFixed(0)}s
-                     </span>
-                   )}
-                   {activeChar.slowEnemiesFactor && activeChar.slowEnemiesFactor < 1 && (
-                     <span className="text-[9px] md:text-[10px] font-bold text-blue-300 bg-blue-400/10 border border-blue-500/30 px-1.5 py-0.5 rounded-sm">
-                       🐢 SLOW -{Math.round((1 - activeChar.slowEnemiesFactor) * 100)}%
-                     </span>
-                   )}
-                   {activeChar.hasPeriodicShield && (
-                     <span className="text-[9px] md:text-[10px] font-bold text-amber-300 bg-amber-400/10 border border-amber-500/30 px-1.5 py-0.5 rounded-sm">
-                       🛡 SHIELD / 20s
-                     </span>
-                   )}
-                 </div>
-               </div>
-             ) : (
-               <div className="p-2.5 bg-white/5 border border-white/10 rounded-sm">
-                 <span className="text-[9px] md:text-[10px] font-bold tracking-[0.15em] text-white/40">
-                   ◇ STANDARD OPERATIVE — NO PASSIVE SKILL
-                 </span>
-               </div>
-             )}
-           </motion.div>
-
-           {/* Element Aura Indicator */}
-           {activeChar.ultimateType !== 'none' && (
-             <div className={`mt-2 text-[10px] md:text-xs font-bold tracking-widest bg-black/50 px-2 py-1 inline-flex items-center gap-1.5 border ${
-               activeChar.ultimateType === 'flame' ? 'text-red-400 border-red-900/50' 
-               : activeChar.ultimateType === 'ice' ? 'text-cyan-400 border-cyan-900/50' 
-               : 'text-yellow-400 border-yellow-900/50'
-             }`}>
-               <span className="animate-pulse">
-                 {activeChar.ultimateType === 'flame' ? '🔥' : activeChar.ultimateType === 'ice' ? '❄️' : '⚡'}
-               </span>
-               {activeChar.ultimateType.toUpperCase()} {t.lobby.elementAura}
-             </div>
-           )}
+            {/* Passive Skill Section */}
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ delay: 0.15, duration: 0.3 }}
+              className="mt-2"
+            >
+              <div className="relative p-2.5 md:p-3 border rounded-sm backdrop-blur-sm bg-zinc-950/50 border-cyan-400/40 shadow-[0_0_12px_rgba(34,211,238,0.15)]">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[9px] md:text-[10px] font-black tracking-[0.2em] text-yellow-400">
+                    ◆ {t.lobby.passiveSkillTitle}
+                  </span>
+                </div>
+                <div className="text-xs md:text-sm font-black italic tracking-wider text-cyan-200">
+                  {t.characters[activeChar.name as keyof typeof t.characters]?.passiveDesc}
+                </div>
+              </div>
+            </motion.div>
          </motion.div>
       </div>
-
-      {/* (Removed DEPLOY button as navigation is now via BottomNav's Quest button) */}
-
-
-
     </div>
   );
 }

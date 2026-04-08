@@ -10,35 +10,57 @@ import { useAchievements } from '../contexts/AchievementContext';
 export default function ShopScreen() {
   const { t } = useLanguage();
   const { coins, spendCoins } = useCurrency();
-  const { purchasedItems, purchaseItem } = useInventory();
+  const { purchasedItems, itemCounts, purchaseItem } = useInventory();
   const { checkAchievements } = useAchievements();
   const items = useItems();
   const [randomizedItems, setRandomizedItems] = React.useState<Item[]>([]);
   const orderRef = React.useRef<number[]>([]);
 
   const buyItem = (id: string, price: number) => {
-    if (!purchasedItems.includes(id)) {
+    const isStackable = id === 'revival_scroll';
+    if (isStackable || !purchasedItems.includes(id)) {
       if (spendCoins(price)) {
-        purchaseItem(id);
-        checkAchievements({ coins: coins - price, itemCount: purchasedItems.length + 1 });
+        purchaseItem(id, isStackable);
+        checkAchievements({ coins: coins - price, itemCount: purchasedItems.length + (purchasedItems.includes(id) ? 0 : 1) });
       }
     }
   };
 
   const [revealItem, setRevealItem] = React.useState<Item | null>(null);
 
-  const handleGacha = () => {
-    if (coins < 100) return;
-    
-    const unowned = items.filter(i => !purchasedItems.includes(i.id));
-    if (unowned.length === 0) return;
+  const ITEM_WEIGHTS: Record<string, number> = {
+    revival_scroll: 80,
+    aegis: 10,
+    time_shuriken: 5,
+    dragon_slayer: 3,
+    golden_jitte: 2
+  };
 
-    if (spendCoins(100)) {
-      const random = unowned[Math.floor(Math.random() * unowned.length)];
-      setRevealItem(random);
+  const handleGacha = () => {
+    if (coins < 10000) return;
+    
+    // Weighted probability (Always 80/10/5/3/2 regardless of ownership)
+    if (spendCoins(10000)) {
+      const totalWeight = items.reduce((sum, item) => sum + (ITEM_WEIGHTS[item.id] || 0), 0);
+      let random = Math.random() * totalWeight;
+      
+      let selected = items[0]; 
+      for (const item of items) {
+        const weight = ITEM_WEIGHTS[item.id] || 0;
+        if (random < weight) {
+          selected = item;
+          break;
+        }
+        random -= weight;
+      }
+
+      setRevealItem(selected);
       setTimeout(() => {
-        purchaseItem(random.id);
-        checkAchievements({ coins: coins - 100, itemCount: purchasedItems.length + 1 });
+        purchaseItem(selected.id);
+        checkAchievements({ 
+          coins: coins - 10000, 
+          itemCount: purchasedItems.includes(selected.id) ? purchasedItems.length : purchasedItems.length + 1
+        });
       }, 500);
     }
   };
@@ -55,7 +77,7 @@ export default function ShopScreen() {
   }, [items]);
 
   return (
-    <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto min-h-[100dvh] bg-transparent">
+    <div className="pt-24 pb-32 px-6 max-w-4xl mx-auto h-[100dvh] overflow-y-auto bg-transparent">
       <div className="mb-12 relative">
         <div className="inline-block bg-gradient-to-r from-red-600 to-orange-500 px-6 py-2 rounded-lg transform -rotate-2 shadow-[4px_4px_0_0_#92001c] mb-4">
           <h2 className="text-white font-headline font-black text-2xl tracking-tight uppercase">{t.shop.title}</h2>
@@ -68,7 +90,7 @@ export default function ShopScreen() {
         <div 
           onClick={handleGacha}
           className={`relative overflow-hidden rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-8 border-4 border-dashed transition-all cursor-pointer ${
-            coins >= 100 
+            coins >= 10000 
               ? 'bg-gradient-to-br from-indigo-600 to-purple-600 border-indigo-400 hover:scale-[1.02] active:scale-95 shadow-2xl shadow-indigo-500/20' 
               : 'bg-slate-200 border-slate-300 grayscale opacity-70 cursor-not-allowed'
           }`}
@@ -108,7 +130,8 @@ export default function ShopScreen() {
             color={item.color} 
             shadowColor={item.shadowColor}
             img={item.img} 
-            isPurchased={purchasedItems.includes(item.id)}
+            isPurchased={purchasedItems.includes(item.id) && item.id !== 'revival_scroll'}
+            quantity={itemCounts[item.id] || 0}
             onPurchase={() => buyItem(item.id, item.price)}
             canAfford={coins >= item.price}
           />
@@ -125,37 +148,42 @@ export default function ShopScreen() {
             onClick={() => setRevealItem(null)}
           >
             <motion.div
-              initial={{ scale: 0, rotate: -20 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 2, opacity: 0 }}
-              className="bg-white rounded-3xl p-12 max-w-md w-full shadow-[0_0_50px_rgba(255,255,255,0.3)] text-center relative overflow-hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className={`absolute inset-0 opacity-10 ${revealItem.color}`} />
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="text-zinc-400 font-black mb-2 tracking-[0.3em] uppercase italic">NEW GEAR UNLOCKED!</div>
-                <div className="w-48 h-48 mx-auto mb-8 relative">
-                  <img src={revealItem.img} alt="new item" className="w-full h-full object-contain drop-shadow-2xl" />
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 pointer-events-none"
-                  >
-                    <Sparkles className="w-full h-full text-yellow-400/30 scale-150" />
-                  </motion.div>
-                </div>
-                <h4 className="text-4xl font-headline font-black text-zinc-900 uppercase italic mb-2 tracking-tighter">{revealItem.title}</h4>
-                <div className={`${revealItem.color} text-white font-black px-4 py-1 rounded-full text-sm uppercase inline-block mb-8`}>
-                  {revealItem.rarity}
-                </div>
-                <button 
-                  onClick={() => setRevealItem(null)}
-                  className="w-full bg-zinc-900 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_0_#000] active:shadow-none active:translate-y-[6px] transition-all uppercase tracking-widest"
-                >
-                  CONTINUE
-                </button>
-              </div>
-            </motion.div>
+               initial={{ scale: 0, rotate: -20 }}
+               animate={{ scale: 1, rotate: 0 }}
+               exit={{ scale: 2, opacity: 0 }}
+               className="bg-zinc-900 rounded-[3rem] p-12 max-w-md w-full shadow-[0_0_100px_rgba(255,255,255,0.1)] text-center relative overflow-hidden text-white"
+               onClick={e => e.stopPropagation()}
+             >
+               <div className={`absolute inset-0 opacity-10 ${revealItem.color}`} />
+               <div className="relative z-10 flex flex-col items-center">
+                 <div className="bg-yellow-400 text-black font-black px-6 py-2 rounded-full text-xs uppercase mb-8 animate-bounce">
+                   {itemCounts[revealItem.id] > 0 ? t.shop.levelUpSuccess : t.shop.newGearUnlocked}
+                 </div>
+                 <div className="w-56 h-56 mx-auto mb-8 relative">
+                   <img src={revealItem.img} alt="new item" className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(255,223,0,0.5)]" />
+                   <motion.div 
+                     animate={{ rotate: 360 }}
+                     transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                     className="absolute inset-0 pointer-events-none"
+                   >
+                     <Sparkles className="w-full h-full text-yellow-400/30 scale-150" />
+                   </motion.div>
+                 </div>
+                 <h4 className="text-4xl font-headline font-black uppercase italic mb-2 tracking-tighter">
+                   {revealItem.title} 
+                   <span className="text-yellow-400 ml-3">Lv.{(itemCounts[revealItem.id] || 0) + 1}</span>
+                 </h4>
+                 <div className={`${revealItem.color} text-white font-black px-4 py-1 rounded-full text-sm uppercase inline-block mb-12`}>
+                   {revealItem.rarity}
+                 </div>
+                 <button 
+                   onClick={() => setRevealItem(null)}
+                   className="w-full bg-white text-black font-black py-5 rounded-2xl shadow-[0_6px_0_0_#cbd5e1] active:shadow-none active:translate-y-[6px] transition-all uppercase tracking-widest text-xl"
+                 >
+                   {t.shop.continue}
+                 </button>
+               </div>
+             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -174,6 +202,7 @@ interface ShopCardProps {
   shadowColor: string;
   img: string;
   isPurchased: boolean;
+  quantity?: number;
   onPurchase: () => void;
   canAfford: boolean;
 }
@@ -188,6 +217,7 @@ function ShopCard({
   shadowColor, 
   img, 
   isPurchased, 
+  quantity = 0,
   onPurchase, 
   canAfford 
 }: ShopCardProps) {
@@ -225,25 +255,28 @@ function ShopCard({
             {t.shop.purchased}
           </div>
         )}
+        {quantity > 0 && (
+          <div className="absolute top-4 right-4 bg-blue-600 text-white font-black px-4 py-1 rounded-full text-xs uppercase tracking-widest shadow-[0_2px_0_0_#1e3a8a]">
+             {title.includes('Scroll') || title.includes('스크롤') || title.includes('卷軸') || title.includes('巻物') ? `x${quantity}` : `Lv.${quantity}`}
+          </div>
+        )}
       </div>
       <div className="mt-6 flex flex-col gap-4">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-headline font-black text-2xl text-white uppercase drop-shadow-sm">{title}</h3>
             <p className="text-white/60 font-bold text-sm mb-2">{desc}</p>
-            {isPurchased && (
-              <div className="mt-3 bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
-                <h4 className="text-xs font-black text-white/40 uppercase tracking-wider mb-2">{t.shop.features}</h4>
-                <ul className="space-y-1">
-                  {features.map((feature, idx) => (
-                    <li key={idx} className="text-sm font-bold text-white/90 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <div className="mt-3 bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
+              <h4 className="text-xs font-black text-white/40 uppercase tracking-wider mb-2">{t.shop.features}</h4>
+              <ul className="space-y-1">
+                {features.map((feature, idx) => (
+                  <li key={idx} className="text-sm font-bold text-white/90 flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${isPurchased ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-white/20'}`}></span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           <div className="text-right shrink-0">
             <span className="block text-yellow-400 font-headline font-black text-xl drop-shadow-sm">{price} 🪙</span>

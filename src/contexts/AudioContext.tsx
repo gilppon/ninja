@@ -3,9 +3,9 @@ import React, { createContext, useContext, useRef, useState, useEffect } from 'r
 interface AudioContextType {
   isPlaying: boolean;
   toggleMusic: () => void;
-  playMusic: (type: 'game' | 'boss') => void;
+  playMusic: (type: 'game' | 'boss', stageId?: string) => void;
   stopMusic: () => void;
-  playSfx: (type: 'hit' | 'slash' | 'fail' | 'boss' | 'powerup' | 'nav' | 'select' | 'click' | 'warning') => void;
+  playSfx: (type: 'hit' | 'slash' | 'fail' | 'boss' | 'powerup' | 'nav' | 'select' | 'click' | 'warning' | 'victory') => void;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -92,6 +92,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       case 'click': return '/assets/sounds/ui/click.wav';
       case 'fail': return '/assets/sounds/effect/fail.mp3';
       case 'boss': return '/assets/sounds/bgm/boss_theme.mp3';
+      case 'victory': return '/assets/sounds/effect/victory_orchestra.mp3';
       case 'powerup': return '/assets/sounds/effect/powerup.wav';
       case 'warning': return '/assets/sounds/effect/warning.mp3';
       default: return '';
@@ -108,7 +109,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return true;
   };
 
-  const playSfx = (type: 'hit' | 'slash' | 'fail' | 'boss' | 'powerup' | 'nav' | 'select' | 'click' | 'warning') => {
+  const playSfx = (type: 'hit' | 'slash' | 'fail' | 'boss' | 'powerup' | 'nav' | 'select' | 'click' | 'warning' | 'victory') => {
     // Try to play custom file first
     const path = getSfxPath(type);
     playFile(path);
@@ -150,23 +151,45 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const playMusic = (type: 'game' | 'boss') => {
+  const getStageBgmPath = (stageId?: string) => {
+    switch (stageId) {
+      case 'q1': return '/assets/sounds/bgm/한_번의_슬라이스.mp3';
+      case 'q2': return '/assets/sounds/bgm/Corte_no_Asfalto.mp3';
+      case 'q3': return '/assets/sounds/bgm/刃を纏う絆.mp3';
+      case 'q4': return '/assets/sounds/bgm/마지막_슬라이스.mp3';
+      default: return '/assets/sounds/bgm/한_번의_슬라이스.mp3';
+    }
+  };
+
+  const playMusic = (type: 'game' | 'boss', stageId?: string) => {
     if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     
     // Stop current music if any
-    if (currentMusicRef.current) {
-        currentMusicRef.current.pause();
-        currentMusicRef.current = null;
+    stopMusic();
+
+    let path = '';
+    if (type === 'boss') {
+      // If the user wants to keep the stage BGM even for bosses, we can change this later
+      // But let's keep boss_theme separate, or just use the stage one. 
+      // User said: "보스전 전용 BGM이 아니라 스테이지로 나누면 어때". 
+      // I'll use the stage BGM for the whole stage!
+      path = getStageBgmPath(stageId);
+    } else {
+      path = getStageBgmPath(stageId);
     }
 
-    const path = '/assets/sounds/bgm/boss_theme.mp3'; // Use boss theme as the primary BGM
     const audio = new Audio(path);
     audio.loop = true;
     audio.volume = 0.4;
-    audio.play().catch(e => console.error("Music play failed:", e));
+    audio.play().catch(e => {
+      if (e.name === 'AbortError') return; // Normal during fast component transitions
+      console.error("Music play failed:", e);
+      startBgm(); // fallback to random synth
+    });
     currentMusicRef.current = audio;
+    setIsPlaying(true);
   };
 
   const stopMusic = () => {
@@ -174,6 +197,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         currentMusicRef.current.pause();
         currentMusicRef.current = null;
     }
+    stopBgm();
+    setIsPlaying(false);
   };
 
   const toggleMusic = () => {

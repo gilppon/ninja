@@ -283,22 +283,50 @@ const UltimateThunder = () => (
   </motion.div>
 );
 
-export default function GameScreen({ character, questId, onFail }: { character: Character, questId: string, onFail: () => void }) {
+interface GameScreenProps {
+  character: Character;
+  questId: string;
+  onFail: () => void;
+  onSuccess: (score: number) => void;
+  reviveTrigger?: number;
+}
+
+const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onSuccess, reviveTrigger = 0 }) => {
   const currentQuest = QUESTS.find(q => q.id === questId) || QUESTS[0];
-  const { equippedItem, purchasedItems } = useInventory();
+  const { equippedItem, purchasedItems, itemCounts } = useInventory();
   const items = useItems();
   const activeGear = items.find(i => i.id === equippedItem);
+  const gearLevel = equippedItem ? (itemCounts[equippedItem] || 1) : 1;
+  const statMultiplier = 1 + (gearLevel - 1) * 0.01;
 
   const [combo, setCombo] = useState(0);
   const [score, setScore] = useState(0);
-  const [playerHp, setPlayerHp] = useState(100);
+  const [isVictory, setIsVictory] = useState(false);
+  const [timeScale, setTimeScale] = useState(1);
+  const [playerHp, setPlayerHp] = useState(activeGear?.id === 'aegis' ? Math.round(150 * statMultiplier) : 100);
   const [ultimateEnergy, setUltimateEnergy] = useState(0);
   const [activeUltimate, setActiveUltimate] = useState<string | null>(null);
+  const [isInvincible, setIsInvincible] = useState(false);
   const playerHpRef = useRef(playerHp);
 
   useEffect(() => {
     playerHpRef.current = playerHp;
   }, [playerHp]);
+
+  // === PREMIUM REVIVE HANDLER ===
+  useEffect(() => {
+    if (reviveTrigger === 0) return; // skip initial mount
+    // HP 복구, 적 제거, 무적 3초
+    setPlayerHp(activeGear?.id === 'aegis' ? Math.round(150 * statMultiplier) : 100);
+    setEnemies([]);
+    setCombo(0);
+    setIsInvincible(true);
+    setActivePattern(null);
+    setPatternProgress(0);
+    setPatternResult(null);
+    setBossShield(false);
+    setTimeout(() => setIsInvincible(false), 3000);
+  }, [reviveTrigger]);
 
   const [bursts, setBursts] = useState<{id: number, x?: number, y?: number}[]>([]);
   const [showBossWarning, setShowBossWarning] = useState(false);
@@ -309,6 +337,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
   const [bgImage, setBgImage] = useState('');
   const [shake, setShake] = useState({ x: 0, y: 0 });
   const [isFever, setIsFever] = useState(false);
+  const [pendingCoins, setPendingCoins] = useState(0);
 
   // === BOSS PATTERN STATE ===
   const [activePattern, setActivePattern] = useState<BossPattern | null>(null);
@@ -352,25 +381,34 @@ export default function GameScreen({ character, questId, onFail }: { character: 
     return () => clearInterval(interval);
   }, [character.hasPeriodicShield]);
 
+  const warningShownForMilestone = useRef(0);
+
   useEffect(() => {
-    // Show boss warning when total kills is close to milestone (multiples of 50)
+    // Show boss warning briefly when total kills is close to milestone (multiples of 50)
     const nextMilestone = (defeatedBosses + 1) * 50;
     const isClose = totalKills >= nextMilestone - 10 && totalKills < nextMilestone;
     const noBossActive = !enemies.some(e => e.isBoss);
     
-    if (isClose && noBossActive) {
-      if (!showBossWarning) {
-        setShowBossWarning(true);
-        playSfx('warning');
-      }
-    } else {
-      if (showBossWarning) {
+    if (isClose && noBossActive && warningShownForMilestone.current !== nextMilestone) {
+      warningShownForMilestone.current = nextMilestone;
+      setShowBossWarning(true);
+      playSfx('warning');
+      
+      // Hide after 3 seconds instead of keeping it on screen permanently
+      setTimeout(() => {
         setShowBossWarning(false);
-      }
+      }, 3000);
     }
-  }, [totalKills, defeatedBosses, enemies, showBossWarning, playSfx]);
+  }, [totalKills, defeatedBosses, enemies, playSfx]);
 
   const takeDamage = useCallback((amount: number) => {
+    if (isInvincible) return; // 부활 후 무적 상태
+    
+    // 이지스 장착 시 피해 판정 전에 20% (강화 적용) 삭감
+    // Lv.1일 때 0.8, Lv.99일 때 1 - (0.2 * 1.98) = 0.604
+    const aegisMultiplier = activeGear?.id === 'aegis' ? Math.max(0.5, 1 - (0.2 * statMultiplier)) : 1;
+    const finalAmount = amount * aegisMultiplier;
+
     if (thunderShieldRef.current) {
       setThunderShieldActive(false);
       lastShieldBrokenAt.current = Date.now();
@@ -379,14 +417,18 @@ export default function GameScreen({ character, questId, onFail }: { character: 
       setTimeout(() => setShake({ x: 0, y: 0 }), 100);
       return;
     }
-    setPlayerHp(h => Math.max(0, h - amount));
+    setPlayerHp(h => Math.max(0, h - finalAmount));
+    
+    // 크로노 수리검 보너스: 피격 시 콤보가 리셋되지 않고 절반(강화 적용)만 차감
+    setCombo(prev => activeGear?.id === 'time_shuriken' ? Math.floor(prev * (0.5 * statMultiplier)) : 0);
+
     playSfx('fail');
-  }, [playSfx]);
+  }, [playSfx, isInvincible, activeGear?.id]);
 
   useEffect(() => {
-    playMusic('game');
+    playMusic('game', questId);
     return () => stopMusic();
-  }, [playMusic, stopMusic]);
+  }, [playMusic, stopMusic, questId]);
 
   useEffect(() => {
     comboRef.current = combo;
@@ -407,11 +449,19 @@ export default function GameScreen({ character, questId, onFail }: { character: 
   }, [combo, isFever, playSfx, checkAchievements, coins, purchasedItems.length]);
 
   useEffect(() => {
-    if (playerHp <= 0) {
+    if (playerHp <= 0 && !isInvincible) {
       playSfx('fail');
       onFail();
     }
-  }, [playerHp, onFail, playSfx]);
+  }, [playerHp, onFail, playSfx, isInvincible]);
+
+  // Flush pending coins outside of render callback
+  useEffect(() => {
+    if (pendingCoins > 0) {
+      addCoins(pendingCoins);
+      setPendingCoins(0);
+    }
+  }, [pendingCoins, addCoins]);
 
   useEffect(() => {
     // Stage-specific background
@@ -502,7 +552,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
       });
 
       // Quick re-check: spawn immediately when field is empty, otherwise normal interval
-      const nextRate = isFever ? 400 : 600;
+      const nextRate = (isFever ? 400 : 600) / timeScale;
       spawnTimer = setTimeout(spawnEnemy, nextRate);
     };
 
@@ -514,7 +564,10 @@ export default function GameScreen({ character, questId, onFail }: { character: 
             
             if (e.isBoss) {
                 // Boss follows a complex sin/cos path
-                const time = Date.now() / 1000;
+                // Using a ref for accumulated time to allow timeScale to affect it
+                if (!e.localTime) e.localTime = Date.now() / 1000;
+                e.localTime += (16 / 1000) * timeScale;
+                const time = e.localTime;
                 return {
                     ...e,
                     x: (w / 2) + Math.cos(time * 1.2) * (w * 0.3),
@@ -522,7 +575,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                 };
             } else {
                 // Minions drift and bounce
-                let slow = character.slowEnemiesFactor || 1;
+                let slow = (character.slowEnemiesFactor || 1) * timeScale;
                 let nx = e.x + (e.vx || 0) * slow;
                 let ny = e.y + (e.vy || 0) * slow;
                 let nvx = e.vx || 0;
@@ -638,7 +691,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
       return next;
     });
     if (comboTimeoutRef.current) clearTimeout(comboTimeoutRef.current);
-    const timeout = character.comboGracePeriod || 1500;
+    const timeout = (character.comboGracePeriod || 1500) * (activeGear?.id === 'time_shuriken' ? statMultiplier : 1);
     comboTimeoutRef.current = setTimeout(() => setCombo(0), timeout);
   };
 
@@ -711,8 +764,6 @@ export default function GameScreen({ character, questId, onFail }: { character: 
           
           if (distToNode < BOSS_PATTERN_NODE_RADIUS) {
             // Hit the checkpoint!
-            triggerSlashEffect();
-            playSfx('slash');
             const nextProgress = patternProgress + 1;
             setPatternProgress(nextProgress);
             
@@ -725,13 +776,44 @@ export default function GameScreen({ character, questId, onFail }: { character: 
             if (nextProgress >= activePattern.nodes.length) {
               // === PATTERN SUCCESS! ===
               setPatternResult('success');
-              playSfx('powerup');
               setBossShield(false);
               setShake({ x: 40, y: 40 });
               setTimeout(() => setShake({ x: 0, y: 0 }), 300);
+
+              // 💥 Finisher Multi-Slash Effect! 💥
+              let slashCount = 0;
+              const maxSlashes = 6;
+              const slashInterval = setInterval(() => {
+                if (slashCount >= maxSlashes) {
+                  clearInterval(slashInterval);
+                  playSfx('powerup'); // Final massive sound
+                  return;
+                }
+                playSfx('slash');
+                
+                // Find boss position or default to center
+                const bossNode = enemies.find(e => e.isBoss);
+                const bx = bossNode ? bossNode.x : w / 2;
+                const by = bossNode ? bossNode.y : h / 2;
+                
+                const angle = Math.random() * 360;
+                const newSlash = { 
+                  id: Date.now() + Math.random(), 
+                  x: bx + (Math.random() - 0.5) * 150, 
+                  y: by + (Math.random() - 0.5) * 150, 
+                  length: 400 + Math.random() * 300, 
+                  angle 
+                };
+                
+                setSlashes(prev => [...prev.slice(-10), newSlash]);
+                setTimeout(() => setSlashes(prev => prev.filter(s => s.id !== newSlash.id)), 200);
+                
+                slashCount++;
+              }, 60);
               
               // Deal massive damage to boss
-              const dmg = activePattern.dmgOnSuccess;
+              const dmgMultiplier = activeGear?.id === 'dragon_slayer' ? 1.5 * statMultiplier : 1;
+              const dmg = activePattern.dmgOnSuccess * dmgMultiplier;
               setEnemies(prev => {
                 const remaining: any[] = [];
                 for (const e of prev) {
@@ -741,11 +823,27 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                     } else {
                       // Boss killed!
                       setDefeatedBosses(d => d + 1);
-                      addCoins(200 + defeatedBosses * 100);
-                      setUltimateEnergy(u => Math.min(100, u + 20));
+                      
+                      const baseBossCoins = 200 + defeatedBosses * 100;
+                      let bossMultiplier = character.coinMultiplier || 1;
+                      if (activeGear?.id === 'dragon_slayer') bossMultiplier *= 1.5;
+                      if (activeGear?.id === 'golden_jitte') bossMultiplier *= 2.0;
+
+                      addCoins(Math.ceil(baseBossCoins * bossMultiplier));
+                      
+                      const ultEnergyMultiplier = activeGear?.id === 'time_shuriken' ? 1.5 * statMultiplier : 1;
+                      const ultEnergyB = 20 * ultEnergyMultiplier;
+                      setUltimateEnergy(u => Math.min(100, u + ultEnergyB));
                       const killBId = Date.now() + Math.random();
                       setBursts(b => [...b, { id: killBId, x: e.x, y: e.y }]);
                       setTimeout(() => setBursts(b => b.filter(i => i.id !== killBId)), 1000);
+                      
+                      // 🎉 Victory Sequence Start 🎉
+                      setIsVictory(true);
+                      setTimeScale(0.2); // Slow mo
+                      setTimeout(() => {
+                        onSuccess(score);
+                      }, 3000);
                     }
                   } else {
                     remaining.push(e);
@@ -835,16 +933,24 @@ export default function GameScreen({ character, questId, onFail }: { character: 
         for (const e of updated) {
           if (!e.isBoss && e.pattern && (e.patternProgress || 0) >= e.pattern.nodes.length) {
             kills++;
-            earned += 10;
+            earned += (character.price > 0 ? 10 : 5);
           } else {
             remaining.push(e);
           }
         }
         if (kills > 0) {
           setTotalKills(prev => prev + kills);
-          const totalCoins = Math.ceil(earned * (character.coinMultiplier || 1));
-          addCoins(totalCoins);
-          setUltimateEnergy(prev => Math.min(100, prev + 2 * kills));
+          
+          let minionMultiplier = character.coinMultiplier || 1;
+          if (activeGear?.id === 'dragon_slayer') minionMultiplier *= 1.5;
+          if (activeGear?.id === 'golden_jitte') minionMultiplier *= 2.0;
+
+          const totalCoins = Math.ceil(earned * minionMultiplier);
+          setPendingCoins(prev => prev + totalCoins);
+          
+          const ultEnergyMinionMultiplier = activeGear?.id === 'time_shuriken' ? 1.5 * statMultiplier : 1;
+          const ultEnergyM = (2 * kills) * ultEnergyMinionMultiplier;
+          setUltimateEnergy(prev => Math.min(100, prev + ultEnergyM));
           handleAction();
           setShake({ x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 });
           setTimeout(() => setShake({ x: 0, y: 0 }), 50);
@@ -918,7 +1024,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
             coinsEarned += 200;
           }
         } else {
-          coinsEarned += 20;
+          coinsEarned += (character.price > 0 ? 20 : 10);
         }
       }
       addCoins(coinsEarned);
@@ -949,9 +1055,18 @@ export default function GameScreen({ character, questId, onFail }: { character: 
         animate={{ 
           x: shake.x, 
           y: shake.y,
-          filter: isFever ? "contrast(1.2) rotate(1deg)" : "none",
+          filter: isVictory 
+            ? "sepia(1) contrast(1.2) grayscale(0.2)" 
+            : isFever 
+              ? "contrast(1.2) rotate(1deg)" 
+              : "none",
         }}
-        transition={{ type: "spring", stiffness: 1000, damping: 10 }}
+        transition={{ 
+          type: "spring", 
+          stiffness: 1000, 
+          damping: 10,
+          filter: { duration: 1 } 
+        }}
       >
         <AnimatePresence>
           {isFever && (
@@ -1157,7 +1272,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
           <div className="flex gap-4">
             {!activePattern && (
               <div className="bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/10">
-                <p className="text-[8px] font-bold text-white/50 uppercase tracking-widest">KILLS</p>
+                <p className="text-[8px] font-bold text-white/50 uppercase tracking-widest">{t.game.score}</p>
                 <p className="text-xl font-black text-white">{totalKills}</p>
               </div>
             )}
@@ -1165,29 +1280,36 @@ export default function GameScreen({ character, questId, onFail }: { character: 
           
           <div className="bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10 w-52">
             <div className="flex justify-between mb-1 text-[8px] font-bold text-white/50 uppercase">
-              <span>{thunderShieldActive ? '🛡️ STATIC WARD' : 'HEALTH'}</span>
-              <span className={playerHp < 30 && !thunderShieldActive ? 'text-red-400 animate-pulse' : 'text-emerald-400'}>{playerHp}%</span>
+              <span>{isInvincible ? '✨ INVINCIBLE' : thunderShieldActive ? '🛡️ STATIC WARD' : 'HEALTH'}</span>
+              <span className={playerHp < 30 && !thunderShieldActive ? 'text-red-400 animate-pulse' : isInvincible ? 'text-amber-300 animate-pulse' : 'text-emerald-400'}>{playerHp}%</span>
             </div>
             <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden border border-white/5 relative">
-              <motion.div className={`h-full ${playerHp < 30 && !thunderShieldActive ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'}`} animate={{ width: `${playerHp}%` }} />
+              <motion.div className={`h-full ${isInvincible ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.6)]' : playerHp < 30 && !thunderShieldActive ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'}`} animate={{ width: `${playerHp}%` }} />
               {thunderShieldActive && (
                 <div className="absolute inset-0 bg-yellow-400/80 shadow-[0_0_15px_yellow] transition-opacity animate-pulse mix-blend-screen" />
+              )}
+              {isInvincible && (
+                <motion.div 
+                  animate={{ opacity: [0.3, 0.8, 0.3] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  className="absolute inset-0 bg-amber-300/60 shadow-[0_0_20px_rgba(251,191,36,0.5)] mix-blend-screen" 
+                />
               )}
             </div>
           </div>
         </div>
 
-        {/* Bottom HUD - Ultimate Button */}
-        {!activePattern && (
+        {/* Bottom HUD - Ultimate Button (Premium characters only) */}
+        {character.ultimateType !== 'none' && (
           <div className="absolute bottom-24 right-8 z-[60]">
              <button 
                onClick={(e) => {
                  e.stopPropagation();
                  triggerUltimate();
                }}
-               disabled={ultimateEnergy < 100 || character.ultimateType === 'none'}
+               disabled={ultimateEnergy < 100}
                className={`w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-2xl flex flex-col items-center justify-center transition-all transform active:scale-95 ${
-                 ultimateEnergy >= 100 && character.ultimateType !== 'none'
+                 ultimateEnergy >= 100
                  ? 'bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600 animate-pulse scale-110'
                  : 'bg-zinc-800/80 grayscale cursor-not-allowed'
                }`}
@@ -1201,14 +1323,27 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                 </div>
                 <Sparkles className={`w-8 h-8 md:w-12 md:h-12 ${ultimateEnergy >= 100 ? 'text-white' : 'text-zinc-500'}`} />
                 <span className="text-[8px] md:text-[10px] font-black text-white mt-1 uppercase italic tracking-tighter">
-                  {character.ultimateType === 'none' ? 'PURE SOUL' : 'ULTIMATE'}
+                  {t.game.ultimate}
                 </span>
              </button>
           </div>
         )}
 
-        {/* Combo Top Display - Moved from Center for Visibility */}
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-50">
+        {/* Combo & Progress Top Display - Moved from Center for Visibility */}
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center">
+          {/* Kills Until Boss Indicator - Only show when 10 or fewer remain */}
+          {!enemies.some(e => e.isBoss) && !showBossWarning && ((defeatedBosses + 1) * 50 - totalKills) <= 10 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-2 bg-red-600/20 backdrop-blur-sm px-4 py-1 rounded-full border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+            >
+              <p className="text-[10px] font-black text-red-500 tracking-[0.2em] uppercase whitespace-nowrap animate-pulse">
+                {t.game.killsUntilBoss.replace('{val}', ((defeatedBosses + 1) * 50 - totalKills).toString())}
+              </p>
+            </motion.div>
+          )}
+
           <AnimatePresence mode="wait">
             {!activePattern && combo > 0 && (
               <motion.div
@@ -1224,7 +1359,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                   </h2>
                 </div>
                 <p className={`font-black italic text-sm md:text-base uppercase tracking-[0.3em] -mt-2 drop-shadow-md ${isFever ? 'text-yellow-300 animate-pulse' : 'text-red-500'}`}>
-                  {isFever ? "FEVER!!" : "COMBO"}
+                  {isFever ? t.game.fever : t.game.combo}
                 </p>
               </motion.div>
             )}
@@ -1303,7 +1438,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
             <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full px-4">
               <div className="flex flex-col items-center justify-center">
                 <p className="text-cyan-300 font-bold text-sm tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] opacity-90 uppercase">
-                  {activePattern.icon} TARGET SKILL: {t.game.patterns[activePattern.name as keyof typeof t.game.patterns] || activePattern.name}
+                  {activePattern.icon} {t.game.targetSkill}: {t.game.patterns[activePattern.name as keyof typeof t.game.patterns] || activePattern.name}
                 </p>
                 <div className="flex gap-1.5 justify-center mt-2">
                   {activePattern.nodes.map((_, i) => (
@@ -1346,19 +1481,19 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                 <div className="flex items-center gap-3 mb-3">
                   <Swords className="w-10 h-10 text-cyan-400" />
                   <h2 className="text-cyan-400 font-black text-5xl md:text-6xl italic tracking-wider drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
-                    USE PATTERN!
+                    {t.game.usePattern}
                   </h2>
                   <Swords className="w-10 h-10 text-cyan-400" />
                 </div>
                 <p className="text-white/80 text-lg font-bold tracking-widest mb-2">
-                  TRACE THE GLOWING PATH
+                  {t.game.tracePath}
                 </p>
                 <div className="bg-black/40 backdrop-blur-sm px-6 py-3 rounded-xl border border-cyan-400/30 inline-block">
                   <p className="text-cyan-300 text-2xl font-black">
                     {activePattern.icon} {t.game.patterns[activePattern.name as keyof typeof t.game.patterns] || activePattern.name} {activePattern.icon}
                   </p>
                   <p className="text-white/60 text-xs mt-1 font-bold">
-                    SWIPE THROUGH {activePattern.nodes.length} CHECKPOINTS IN ORDER
+                    {t.game.swipeCheckpoints.replace('{val}', activePattern.nodes.length.toString())}
                   </p>
                 </div>
               </motion.div>
@@ -1384,10 +1519,10 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                   <AlertTriangle className="w-12 h-12 text-red-500 animate-pulse" />
                   <div className="text-left">
                     <h2 className="text-red-500 font-black text-5xl md:text-6xl italic tracking-tighter drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] leading-none">
-                      BOSS INCOMING
+                      {t.game.bossIncoming}
                     </h2>
                     <p className="text-white font-black text-sm tracking-[0.3em] opacity-90 uppercase mt-2">
-                      {50 - (totalKills % 50)} KILLS UNTIL BOSS SPAWN
+                      {t.game.killsUntilBoss.replace('{val}', (50 - (totalKills % 50)).toString())}
                     </p>
                   </div>
                   <AlertTriangle className="w-12 h-12 text-red-500 animate-pulse" />
@@ -1423,7 +1558,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                 className="px-12 py-4 bg-emerald-500/30 backdrop-blur-sm border-y-4 border-emerald-400 skew-x-[-10deg]"
               >
                 <h2 className="text-emerald-300 font-black text-5xl italic drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]">
-                  ⚔️ PATTERN STRIKE!
+                  ⚔️ {t.game.patternStrike}
                 </h2>
               </motion.div>
             </motion.div>
@@ -1442,7 +1577,7 @@ export default function GameScreen({ character, questId, onFail }: { character: 
                 className="px-12 py-4 bg-red-500/30 backdrop-blur-sm border-y-4 border-red-500 skew-x-[10deg]"
               >
                 <h2 className="text-red-400 font-black text-4xl italic drop-shadow-[0_0_20px_rgba(239,68,68,0.8)]">
-                  💥 COUNTER ATTACK! -15 HP
+                  💥 {t.game.counterAttack}
                 </h2>
               </motion.div>
             </motion.div>
@@ -1452,4 +1587,6 @@ export default function GameScreen({ character, questId, onFail }: { character: 
       </motion.div>
     </div>
   );
-}
+};
+
+export default GameScreen;

@@ -1,194 +1,129 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { auth } from '../lib/firebase';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signInWithPopup, 
-  GoogleAuthProvider
-} from 'firebase/auth';
-import { LogIn, UserPlus, Shield, Chrome } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
-export default function LoginModal({ onClose }: { onClose: () => void }) {
+interface LoginModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+  const { t } = useLanguage();
+  const { signIn, signUp, loading, error } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSocialLogin = async (providerName: 'google') => {
-    setLoading(true);
-    setError(null);
-    let provider = new GoogleAuthProvider();
-
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    if (isSignUp) {
+      await signUp(email, password);
+    } else {
+      await signIn(email, password);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden font-sans">
-      {/* Background with Glassmorphism & Generated Image */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src="/assets/images/login_bg.png" 
-          className="w-full h-full object-cover scale-105" 
-          alt="Login Background" 
-        />
-        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" />
-        
-        {/* Animated Scanline Effect */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
-          <div className="w-full h-1 bg-cyan-400/50 shadow-[0_0_20px_cyan] animate-[scan_4s_linear_infinite]" />
-        </div>
-      </div>
-
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative z-10 w-full max-w-md p-8 sm:p-10 mx-4"
-      >
-        {/* Cyberpunk Border & Frame */}
-        <div className="absolute inset-0 border-2 border-cyan-500/40 rounded-3xl transform -skew-x-2 bg-slate-900/80 shadow-[0_0_40px_rgba(34,211,238,0.2)] backdrop-blur-xl" />
-        <div className="absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 border-yellow-400 rounded-tr-3xl pointer-events-none" />
-        <div className="absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 border-cyan-400 rounded-bl-3xl pointer-events-none" />
-
-        <div className="relative">
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center mb-4 border border-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-              <Shield className="text-cyan-400 w-8 h-8" strokeWidth={2.5} />
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100] pointer-events-auto">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="relative w-full max-w-md bg-[#1a1a1a] border-2 border-cyan-500/30 rounded-[2rem] shadow-[0_0_50px_rgba(34,211,238,0.2)] overflow-hidden"
+        >
+          {/* Top Industrial Header */}
+          <div className="bg-cyan-500/10 border-b border-cyan-500/20 px-8 py-6 flex items-center justify-between">
+            <h1 className="font-headline font-black text-white text-3xl uppercase italic tracking-tighter">
+              {t.login.firewallAccess}
+            </h1>
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-cyan-400 animate-pulse" />
+              <div className="w-2 h-2 bg-cyan-400 opacity-50" />
+              <div className="w-2 h-2 bg-cyan-400 opacity-20" />
             </div>
-            <h2 className="text-3xl font-black italic text-white tracking-widest uppercase mb-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-              {isSignUp ? 'Firebase Deploy' : 'Firewall Access'}
-            </h2>
-            <p className="text-cyan-400/70 text-xs font-mono uppercase tracking-[0.3em]">
-              {isSignUp ? 'New Firebase Identity' : 'Encrypted Authentication'}
-            </p>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-[10px] text-cyan-400 font-black uppercase tracking-widest ml-1">Secure Email</label>
+          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-[0.2em]">
+                  {loading ? t.login.firebaseDeploy : t.login.newIdentity}
+                </span>
+                <span className="text-[10px] text-zinc-500 font-mono tracking-tighter">
+                  {t.login.encryptedAuth}
+                </span>
+              </div>
+              
               <div className="relative">
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-950/50 border border-cyan-500/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all font-mono placeholder:text-slate-700" 
-                  placeholder="NINJA@FIREBASE.SYS"
+                  placeholder={t.login.email}
+                  className="w-full bg-black/40 border-2 border-zinc-800 focus:border-cyan-400 text-white px-6 py-4 rounded-xl outline-none transition-all font-mono placeholder:text-zinc-600"
+                  required
+                />
+              </div>
+
+              <div className="relative">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.login.password}
+                  className="w-full bg-black/40 border-2 border-zinc-800 focus:border-cyan-400 text-white px-6 py-4 rounded-xl outline-none transition-all font-mono placeholder:text-zinc-600"
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] text-cyan-400 font-black uppercase tracking-widest ml-1">Access Pass</label>
-              <input 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950/50 border border-cyan-500/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all font-mono placeholder:text-slate-700" 
-                placeholder="********"
-                required
-              />
-            </div>
-
             {error && (
               <motion.div 
-                initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                className="text-red-400 text-[10px] font-mono uppercase tracking-widest bg-red-950/30 border-l-2 border-red-500 p-2"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }}
+                className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-red-500 text-xs font-bold text-center"
               >
-                ⚠ Protocol Error: {error}
+                {error}
               </motion.div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
-              className="w-full relative group h-14 mt-4"
+              className="group relative w-full bg-cyan-500 py-5 rounded-2xl shadow-[0_8px_0_0_#0891b2] active:translate-y-1 active:shadow-[0_4px_0_0_#0891b2] transition-all disabled:opacity-50 disabled:pointer-events-none"
             >
-              <div className={`absolute inset-0 bg-yellow-400 rounded-xl transform -skew-x-2 transition-transform group-hover:scale-[1.02] active:scale-95 ${loading ? 'opacity-50' : ''}`} />
-              <div className="relative flex items-center justify-center h-full text-black font-black italic tracking-widest uppercase gap-2">
-                {loading ? (
-                  <span className="animate-pulse">Authorizing...</span>
-                ) : (
-                  <>
-                    {isSignUp ? <UserPlus size={18} /> : <LogIn size={18} />}
-                    {isSignUp ? 'Deploy Identity' : 'Override Firewall'}
-                  </>
-                )}
-              </div>
+              <span className="font-headline font-black text-black text-2xl uppercase tracking-tighter">
+                {loading ? t.login.authorizing : (isSignUp ? t.login.deployIdentity : t.login.overrideFirewall)}
+              </span>
             </button>
+
+            <div className="flex flex-col gap-4">
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-xs font-bold text-zinc-500 hover:text-cyan-400 transition-colors uppercase tracking-widest text-center"
+              >
+                {isSignUp ? t.login.signInPrompt : t.login.signUpPrompt}
+              </button>
+              
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-[10px] font-black text-zinc-700 hover:text-red-400 transition-colors uppercase tracking-[0.3em] text-center"
+              >
+                {t.login.abortAuth}
+              </button>
+            </div>
           </form>
 
-          <div className="mt-8">
-            <div className="relative flex items-center justify-center mb-6">
-              <div className="absolute inset-0 h-px bg-cyan-500/20" />
-              <span className="relative bg-[#1a2233] px-3 text-[10px] text-cyan-400/50 font-mono tracking-widest">FIREBASE CLOUD SYNC</span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              {[
-                { Icon: Chrome, label: 'Google', id: 'google' }
-              ].map(({ Icon, label, id }) => (
-                <button 
-                  key={label}
-                  onClick={() => handleSocialLogin(id as any)}
-                  className="flex flex-col items-center justify-center py-3 bg-slate-950/50 border border-cyan-500/20 rounded-xl hover:bg-cyan-500/10 hover:border-cyan-400/50 transition-all group"
-                >
-                  <Icon className="w-6 h-6 text-cyan-400 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] text-cyan-400/50 font-bold uppercase tracking-widest">{label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-8 flex flex-col items-center gap-4">
-              <button 
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-[10px] text-cyan-400 font-bold hover:text-white uppercase tracking-widest transition-colors underline underline-offset-4"
-              >
-                {isSignUp ? 'Identified Before? Sign In' : 'New recruit? Register at Firebase'}
-              </button>
-
-
-
-              <button 
-                onClick={onClose}
-                className="mt-2 text-[8px] text-slate-500 hover:text-slate-300 uppercase tracking-widest transition-colors"
-              >
-                [ ABORT AUTHENTICATION ]
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Aesthetic Bottom Info */}
-      <div className="absolute bottom-6 left-6 font-mono text-[8px] text-cyan-500/30 tracking-[0.5em] uppercase hidden sm:block">
-        Ninja Brick Firebase-Auth-Service | Status: STEREOTYPICAL_SECURE
+          {/* Decorative Corner */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rotate-45 translate-x-16 -translate-y-16 pointer-events-none" />
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }

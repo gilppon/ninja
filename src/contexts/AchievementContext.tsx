@@ -2,12 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Star, Shield, Zap } from 'lucide-react';
 import { useCurrency } from './CurrencyContext';
-import { useInventory } from './InventoryContext';
+import { useLanguage } from './LanguageContext';
 
 interface Achievement {
   id: string;
-  title: { en: string; ko: string };
-  desc: { en: string; ko: string };
   icon: React.ReactNode;
   condition: (stats: any) => boolean;
   reward: number;
@@ -16,32 +14,24 @@ interface Achievement {
 const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'combo_10',
-    title: { en: 'Combo Novice', ko: '콤보 입문자' },
-    desc: { en: 'Reach 10 combos', ko: '10 콤보 달성' },
     icon: <Zap className="w-6 h-6 text-yellow-400" />,
     condition: (s) => s.maxCombo >= 10,
     reward: 50
   },
   {
     id: 'combo_50',
-    title: { en: 'Combo Master', ko: '콤보 마스터' },
-    desc: { en: 'Reach 50 combos', ko: '50 콤보 달성' },
     icon: <Zap className="w-6 h-6 text-red-500" />,
     condition: (s) => s.maxCombo >= 50,
     reward: 200
   },
   {
     id: 'rich_ninja',
-    title: { en: 'Rich Ninja', ko: '부유한 닌자' },
-    desc: { en: 'Hold 500 coins', ko: '500 코인 보유' },
     icon: <Shield className="w-6 h-6 text-indigo-400" />,
     condition: (s) => s.coins >= 500,
     reward: 100
   },
   {
     id: 'collector',
-    title: { en: 'Collector', ko: '수집가' },
-    desc: { en: 'Own 3 items', ko: '아이템 3개 보유' },
     icon: <Trophy className="w-6 h-6 text-amber-500" />,
     condition: (s) => s.itemCount >= 3,
     reward: 150
@@ -56,6 +46,7 @@ interface AchievementContextType {
 const AchievementContext = createContext<AchievementContextType | undefined>(undefined);
 
 export function AchievementProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage();
   const [unlockedIds, setUnlockedIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('ninja_achievements');
     return saved ? JSON.parse(saved) : [];
@@ -94,9 +85,15 @@ export function AchievementProvider({ children }: { children: React.ReactNode })
                 {toast.icon}
               </div>
               <div className="flex-1">
-                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Achievement Unlocked!</p>
-                <h4 className="text-white font-black text-lg italic uppercase">{toast.title.ko}</h4>
-                <p className="text-zinc-400 text-xs font-bold">{toast.desc.ko}</p>
+                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">
+                  {t.achievements.unlocked}
+                </p>
+                <h4 className="text-white font-black text-lg italic uppercase">
+                  {t.achievements[toast.id as keyof typeof t.achievements]?.title || toast.id}
+                </h4>
+                <p className="text-zinc-400 text-xs font-bold">
+                  {t.achievements[toast.id as keyof typeof t.achievements]?.desc || ''}
+                </p>
               </div>
               <div className="text-yellow-400 font-black text-lg">+{toast.reward}</div>
             </div>
