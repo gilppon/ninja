@@ -119,6 +119,7 @@ export default function MenuModal({ isOpen, onClose, onActivatePass, onShowLogin
                   <PayPalCheckout
                     amount="9.99"
                     description="Season All-Pass: Unlock All Characters + 2x Rewards"
+                    customId={`${user?.uid}_premiumPass`}
                     onSuccess={() => {
                       onActivatePass();
                       setShowBundlePayPal(false);

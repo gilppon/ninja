@@ -6,11 +6,12 @@ import { ShieldCheck, X } from 'lucide-react';
 interface PayPalCheckoutProps {
   amount: string;       // "3.99" or "9.99"
   description: string;  // 구매 설명 텍스트
+  customId: string;     // 유저 ID와 구매 아이템 식별자 (예: "uid_pass" 또는 "uid_charName")
   onSuccess: () => void;
   onCancel?: () => void;
 }
 
-export default function PayPalCheckout({ amount, description, onSuccess, onCancel }: PayPalCheckoutProps) {
+export default function PayPalCheckout({ amount, description, customId, onSuccess, onCancel }: PayPalCheckoutProps) {
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +50,7 @@ export default function PayPalCheckout({ amount, description, onSuccess, onCance
                   value: amount,
                 },
                 description: description,
+                custom_id: customId,
               }],
             });
           }}

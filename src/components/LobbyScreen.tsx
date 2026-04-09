@@ -197,6 +197,7 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, onShowM
                     <PayPalCheckout
                       amount="3.99"
                       description={`Unlock ${activeChar.name} Character`}
+                      customId={`${user?.uid}_char_${activeChar.name}`}
                       onSuccess={() => {
                         onUnlockChar(activeChar.name);
                         setShowPayPal(false);
