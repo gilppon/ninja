@@ -1,4 +1,4 @@
-# 🥷 NINJA BRICK ACTION - Global Promo Kit
+# 🥷 NINJA PATTERN SLICE - Global Promo Kit
 
 대표님! 즉시 복사해서 사용할 수 있는 다국어 홍보 병기(카피) 모음입니다. 
 
@@ -6,28 +6,28 @@
 
 ### 🇰🇷 KOREAN (한국어)
 "브라우저에서 이런 타격감이? 🥷✨ 
-0.1초의 망설임도 허용하지 않는 초고속 닌자 액션!
-지금 바로 'NINJA BRICK ACTION'에서 한계를 돌파하세요.
+0.1초의 망설임도 허용하지 않는 초고속 패턴 슬라이스 액션!
+지금 바로 'NINJA PATTERN SLICE'에서 한계를 돌파하세요.
 🔗 https://ninja.next-haru.com
-#닌자게임 #Roguelike #WebGame #인디게임"
+#닌자게임 #Roguelike #WebGame #인기게임 #PatternSlice"
 
 ---
 
 ### 🇺🇸 ENGLISH (영어)
 "Insane game feel on your browser? 🥷✨ 
-High-speed Ninja action where 0.1s makes all the difference!
-Break your limits now in 'NINJA BRICK ACTION'. 
+High-speed Pattern Slice action where 0.1s makes all the difference!
+Break your limits now in 'NINJA PATTERN SLICE'. 
 🔗 https://ninja.next-haru.com
-#NinjaAction #Roguelike #WebGame #IndieGame"
+#NinjaAction #Roguelike #WebGame #IndieGame #PatternSlice"
 
 ---
 
 ### 🇯🇵 JAPANESE (일본어)
 "ブラウザでこの爽快感！？🥷✨ 
-0.1秒の猶予も許さない超高速忍者アクション！
-今すぐ「NINJA BRICK ACTION」で限界を突破せよ。
+0.1秒の猶予も許さない超高速パターン・スライス・アクション！
+今すぐ「NINJA PATTERN SLICE」で限界を突破せよ。
 🔗 https://ninja.next-haru.com
-#忍者ゲーム #ローグライク #ブラウザゲーム #インディーゲーム"
+#忍者ゲーム #ローグライ크 #ブラウザゲーム #パターン・スライス"
 
 ## 2. 홍보용 이미지 리소스 (OG Image)
 - **위치**: `public/og-preview.png` (실제 게임 화면 캡처본)

@@ -41,7 +41,7 @@ export const LEGAL_DATA: Record<Language, LegalContent> = {
       title: "이용약관",
       lastUpdated: "2026-04-09",
       sections: [
-        { title: "1. 약관의 승인", content: "Ninja Brick Action('서비스')에 접속하거나 이용함으로써 귀하는 본 이용약관에 동의하게 됩니다." },
+        { title: "1. 약관의 승인", content: "Ninja Pattern Slice('서비스')에 접속하거나 이용함으로써 귀하는 본 이용약관에 동의하게 됩니다." },
         { title: "2. 서비스 설명", content: "본 서비스는 온라인 웹 기반 게임 콘텐츠 및 디지털 상품을 제공합니다." },
         { title: "3. 사용자 계정", content: "사용자는 계정 보안 유지에 대한 책임이 있습니다. 정확한 정보를 제공해야 하며, 위반 시 계정이 정지될 수 있습니다." },
         { title: "4. 지식재산권", content: "코드, 아트워크, 캐릭터, UI 및 브랜딩을 포함한 모든 콘텐츠는 Next Haru의 소유입니다. 무단 복제 또는 배포는 금지됩니다." },
@@ -81,7 +81,7 @@ export const LEGAL_DATA: Record<Language, LegalContent> = {
       title: "Terms of Service",
       lastUpdated: "2026-04-09",
       sections: [
-        { title: "1. Acceptance of Terms", content: "By accessing or using Ninja Brick Action ('Service'), you agree to be bound by these Terms of Service." },
+        { title: "1. Acceptance of Terms", content: "By accessing or using Ninja Pattern Slice ('Service'), you agree to be bound by these Terms of Service." },
         { title: "2. Description of Service", content: "The Service provides online web-based game content and digital goods." },
         { title: "3. User Accounts", content: "Users are responsible for maintaining account security. You must provide accurate information. We may suspend accounts for violations." },
         { title: "4. Intellectual Property", content: "All content including code, artwork, characters, UI, and branding belongs to Next Haru. Unauthorized copying or distribution is prohibited." },
@@ -134,7 +134,7 @@ export const LEGAL_DATA: Record<Language, LegalContent> = {
       title: "利用規約",
       lastUpdated: "2026-04-09",
       sections: [
-        { title: "1. 規約の同意", content: "Ninja Brick Action（以下「本サービス」）にアクセス、または利用することにより、お客様は本利用規約に同意したものとみなされます。" },
+        { title: "1. 規約の同意", content: "Ninja Pattern Slice（以下「本サービス」）にアクセス、または利用することにより、お客様は本利用規約に同意したものとみなされます。" },
         { title: "2. サービスの内容", content: "本サービスは、オンラインのウェブベースのゲームコンテンツおよびデジタルアイテムを提供します。" },
         { title: "3. ユーザーアカウント", content: "ユーザーはアカウントのセキュリティ維持に責任を負います。正確な情報を提供する必要があり、規約違反の場合はアカウントを停止することがあります。" },
         { title: "4. 知的財産権", content: "コード、アートワーク、キャラクター、UI、ブランディングを含むすべてのコンテンツは Next Haru に帰속します。無断転載・配布は禁止されています。" },
