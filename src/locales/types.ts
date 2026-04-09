@@ -152,6 +152,8 @@ export interface Translations {
         description: string;
       };
     };
+    locked: string;
+    clearPrevious: string;
   };
   characters: {
     [key: string]: {
@@ -177,4 +179,12 @@ export interface Translations {
     lobby: string;
     season2: string;
   };
+  footer: {
+    terms: string;
+    privacy: string;
+    refund: string;
+    legal: string;
+  };
 }
+
+

@@ -197,7 +197,9 @@ const ko: Translations = {
       q2: { title: '냉동 시설', description: '시간 속에 얼어붙은 사이버 시설. 핵심부를 지키는 네온 오니를 처치하라.' },
       q3: { title: '용의 봉우리', description: '봉우리를 올라 전자 폭풍을 일으키는 사이버 드래곤을 쓰러뜨려라.' },
       q4: { title: '공허의 이상', description: '공허의 이상 현상 속으로 뛰어들어 타락한 보이드 닌자에게서 생존하라.' }
-    }
+    },
+    locked: '잠김',
+    clearPrevious: '이전 스테이지 클리어 필요'
   },
   achievements: {
     combo_10: { title: '콤보 입문자', desc: '10 콤보 달성' },
@@ -215,7 +217,14 @@ const ko: Translations = {
     next: '다음 전장으로',
     lobby: '로비로',
     season2: '시즌 1 종료. 시즌 2를 기대해 주세요!'
+  },
+  footer: {
+    terms: '이용약관',
+    privacy: '개인정보처리방침',
+    refund: '환불정책',
+    legal: '특정상거래법에 따른 표기'
   }
 };
+
 
 export default ko;

@@ -76,15 +76,15 @@ const ja: Translations = {
     tracePath: '光る軌跡をなぞってください',
     swipeCheckpoints: '{val}個のチェックポイントを順に通過',
     targetSkill: '目標スキル',
-    patternStrike: 'パターンス라이ク！',
+    patternStrike: 'パターンスライク！',
     counterAttack: 'カウンター！ -15 HP',
     patterns: {
       'LIGHTNING SLASH': '雷光斬り',
-      'CROSS STRIKE': 'クロススト라이크',
-      'V STRIKE': 'Vスト라이크',
+      'CROSS STRIKE': 'クロスストライク',
+      'V STRIKE': 'Vストライク',
       'RISING DRAGON': '昇竜斬り',
       'DEATH SPIRAL': '死の渦',
-      'Z-STRIKE': 'Zスト라이크',
+      'Z-STRIKE': 'Zストライク',
       'PENTAGRAM': 'ペンタグラム',
       'HEXAGON SEAL': 'ヘキサゴン封印',
       'CROSS EXECUTION': 'クロス処刑',
@@ -120,7 +120,7 @@ const ja: Translations = {
     premiumPass: 'シーズンオールパス ($9.99)',
     doubleRewards: '全エージェント解放 & 30日間報酬2倍',
     activate: '有効化する ($9.99)',
-    exchangePrompt: '10 ジェム = 100 コ인',
+    exchangePrompt: '10 ジェム = 100 コイン',
     exchangeBtn: 'リソースを交換',
     arsenalLogistics: '忍者兵器庫と補給'
   },
@@ -196,8 +196,10 @@ const ja: Translations = {
       q1: { title: 'ネオン外縁部', description: 'ネオン外縁区を通過する不正ドローンを排除せよ。' },
       q2: { title: '凍結施設', description: '時間に凍りついたサイバー施設。コアを守るネオン鬼を倒せ。' },
       q3: { title: '竜の峰', description: '峰を登り、電子嵐を引き起こすサイバードラゴンを討伐せよ。' },
-      q4: { title: '虚空의 異変', description: '虚空の異変に飛び込み、堕落したヴォイド忍者から生き延びろ。' }
-    }
+      q4: { title: '虚空の異変', description: '虚空の異変に飛び込み、堕落したヴォイド忍者から生き延びろ。' }
+    },
+    locked: 'ロック中',
+    clearPrevious: '前のステージをクリアしてください'
   },
   achievements: {
     combo_10: { title: 'コンボ見習い', desc: '10コンボ達成' },
@@ -215,7 +217,14 @@ const ja: Translations = {
     next: '次の戦場へ',
     lobby: 'ロビーに戻る',
     season2: 'シーズン1完了。シーズン2をお楽しみに！'
+  },
+  footer: {
+    terms: '利用規約',
+    privacy: 'プライバシーポリシー',
+    refund: '返金ポリシー',
+    legal: '特定商取引法に基づく表記'
   }
 };
+
 
 export default ja;

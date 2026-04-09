@@ -197,7 +197,9 @@ const en: Translations = {
       q2: { title: 'Frozen Facilities', description: 'A cyber-facility frozen in time. Defeat the Neon Oni guarding the core.' },
       q3: { title: "Dragon's Peak", description: 'Ascend the peak and slay the Cyber Dragon causing electronic storms.' },
       q4: { title: 'Void Anomaly', description: 'Venture into the void anomaly and survive against the corrupted Void Ninja.' }
-    }
+    },
+    locked: 'LOCKED',
+    clearPrevious: 'Clear previous stage to unlock'
   },
   achievements: {
     combo_10: { title: 'Combo Novice', desc: 'Reach 10 combos' },
@@ -215,7 +217,14 @@ const en: Translations = {
     next: 'NEXT TARGET',
     lobby: 'RETURN TO BASE',
     season2: 'SEASON 1 COMPLETE. PREPARE FOR SEASON 2!'
+  },
+  footer: {
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy',
+    refund: 'Refund Policy',
+    legal: 'Legal Notice'
   }
 };
+
 
 export default en;

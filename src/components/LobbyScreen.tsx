@@ -66,7 +66,8 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, onShowM
   const activeChar = characters[selectedChar];
 
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-slate-950 font-sans pb-24">
+    <div className="relative w-full min-h-full bg-slate-950 font-sans pb-24">
+
       {/* Background Starscape & Nebula */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#000_100%)] z-10" />

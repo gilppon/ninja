@@ -28,8 +28,32 @@ export default defineConfig(({mode}) => {
               type: 'image/png',
               purpose: 'any maskable'
             }
+          ],
+          screenshots: [
+            {
+              src: 'assets/screenshots/gameplay.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              label: 'Thrilling Ninja Action',
+              form_factor: 'narrow'
+            },
+            {
+              src: 'assets/screenshots/characters.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              label: 'Choose Your Legend',
+              form_factor: 'narrow'
+            },
+            {
+              src: 'assets/screenshots/gear.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              label: 'Forge Ultimate Weapons',
+              form_factor: 'narrow'
+            }
           ]
         },
+
         workbox: {
           globPatterns: ['**/*.{js,css,html,png,jpg,svg,mp3,wav}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // <== 5MB로 상향

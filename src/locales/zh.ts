@@ -215,7 +215,14 @@ const zh: Translations = {
     next: '下一战场',
     lobby: '返回大厅',
     season2: '第一赛季完结。敬请期待第二赛季！'
+  },
+  footer: {
+    terms: '服务条款',
+    privacy: '隐私政策',
+    refund: '退款政策',
+    legal: '法律声明'
   }
 };
+
 
 export default zh;

@@ -213,8 +213,14 @@ const es: Translations = {
     score: 'PUNTAJE FINAL',
     coins: 'MONEDAS OBTENIDAS',
     next: 'SIGUIENTE OBJETIVO',
-    lobby: 'VOLVER A BASE',
-    season2: '¡TEMPORADA 1 COMPLETA. PREPÁRATE PARA LA TEMPORADA 2!'
+    lobby: 'VOLVER AL LOBBY',
+    season2: 'TEMPORADA 1 COMPLETADA. ¡PREPÁRATE PARA LA TEMPORADA 2!'
+  },
+  footer: {
+    terms: 'Términos de Servicio',
+    privacy: 'Política de Privacidad',
+    refund: 'Política de Reembolso',
+    legal: 'Aviso Legal'
   }
 };
 

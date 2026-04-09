@@ -8,8 +8,10 @@ import QuestScreen from './components/QuestScreen';
 import GameScreen from './components/GameScreen';
 import ShopScreen from './components/ShopScreen';
 import GearScreen from './components/GearScreen';
+import LegalFooter from './components/LegalFooter';
 import FailOfferModal from './components/FailOfferModal';
 import VictoryModal from './components/VictoryModal';
+
 import { QUESTS } from './components/QuestScreen';
 import { Screen } from './types';
 import { useLanguage } from './contexts/LanguageContext';
@@ -75,13 +77,20 @@ function GameApp() {
     return saved ? JSON.parse(saved) : ['MASTER', 'JADE'];
   });
 
-  // 로그인 후 대기 중인 구매 요청을 자동 처리하기 위한 상태
   const [pendingPurchase, setPendingPurchase] = useState<string | null>(null);
   const [pendingBundlePurchase, setPendingBundlePurchase] = useState(false);
+  const [clearedQuests, setClearedQuests] = useState<string[]>(() => {
+    const saved = localStorage.getItem('ninja_cleared_quests');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   React.useEffect(() => {
     localStorage.setItem('ninja_owned_chars', JSON.stringify(ownedChars));
   }, [ownedChars]);
+
+  React.useEffect(() => {
+    localStorage.setItem('ninja_cleared_quests', JSON.stringify(clearedQuests));
+  }, [clearedQuests]);
 
   const isPremiumChar = CHARACTERS[selectedChar].isPremium;
   const { t } = useLanguage();
@@ -89,55 +98,52 @@ function GameApp() {
   const { addCoins } = useCurrency();
   const { itemCounts, consumeItem } = useInventory();
 
-  // === Firestore에서 소유 캐릭터 로드 ===
-  const loadOwnedCharsFromFirestore = useCallback(async (uid: string) => {
+  // === Firestore에서 유저 데이터 로드 ===
+  const loadUserDataFromFirestore = useCallback(async (uid: string) => {
     try {
       const docRef = doc(db, 'users', uid);
       const snap = await getDoc(docRef);
       if (snap.exists()) {
         const data = snap.data();
         if (data.ownedChars && Array.isArray(data.ownedChars)) {
-          // Firestore 데이터와 로컬 데이터 병합 (둘 다 유지)
-          setOwnedChars(prev => {
-            const merged = Array.from(new Set([...prev, ...data.ownedChars]));
-            return merged;
-          });
+          setOwnedChars(prev => Array.from(new Set([...prev, ...data.ownedChars])));
+        }
+        if (data.clearedQuests && Array.isArray(data.clearedQuests)) {
+          setClearedQuests(prev => Array.from(new Set([...prev, ...data.clearedQuests])));
         }
       }
     } catch (err) {
-      console.error('Failed to load owned chars from Firestore:', err);
+      console.error('Failed to load user data from Firestore:', err);
     }
   }, []);
 
-  // === Firestore에 소유 캐릭터 저장 ===
-  const saveOwnedCharsToFirestore = useCallback(async (uid: string, chars: string[]) => {
+  // === Firestore에 유저 데이터 저장 ===
+  const saveUserDataToFirestore = useCallback(async (uid: string, chars: string[], quests: string[]) => {
     try {
       const docRef = doc(db, 'users', uid);
-      await setDoc(docRef, { ownedChars: chars }, { merge: true });
+      await setDoc(docRef, { ownedChars: chars, clearedQuests: quests }, { merge: true });
     } catch (err) {
-      console.error('Failed to save owned chars to Firestore:', err);
+      console.error('Failed to save user data from Firestore:', err);
     }
   }, []);
 
   // === 유저 로그인/로그아웃 감지 ===
   React.useEffect(() => {
     if (user) {
-      // 로그인 시 Firestore에서 데이터 로드
-      loadOwnedCharsFromFirestore(user.uid);
+      loadUserDataFromFirestore(user.uid);
     } else {
-      // 로그아웃 시 로컬 상태 초기화
       setOwnedChars(['MASTER', 'JADE']);
+      setClearedQuests([]);
       setSelectedChar(0);
     }
-  }, [user, loadOwnedCharsFromFirestore]);
+  }, [user, loadUserDataFromFirestore]);
 
-  // === 소유 캐릭터 변경 시 Firestore에 동기화 ===
+  // === 데이터 변경 시 Firestore에 동기화 ===
   React.useEffect(() => {
-    if (user && ownedChars.length > 2) {
-      // 기본 2캐릭 이상일 때만 저장 (프리미엄 구매 발생 시)
-      saveOwnedCharsToFirestore(user.uid, ownedChars);
+    if (user) {
+      saveUserDataToFirestore(user.uid, ownedChars, clearedQuests);
     }
-  }, [user, ownedChars, saveOwnedCharsToFirestore]);
+  }, [user, ownedChars, clearedQuests, saveUserDataToFirestore]);
 
 
   // === 개별 캐릭터 잠금 해제 (로그인 필수) ===
@@ -188,6 +194,11 @@ function GameApp() {
   const handleGameSuccess = (finalScore: number) => {
     const calculatedCoins = 500 + Math.floor(finalScore / 100);
     addCoins(calculatedCoins);
+    
+    // 현재 퀘스트를 클리어 목록에 추가
+    if (!clearedQuests.includes(selectedQuestId)) {
+      setClearedQuests(prev => [...prev, selectedQuestId]);
+    }
     
     const currentIndex = QUESTS.findIndex(q => q.id === selectedQuestId);
     const isLast = currentIndex === QUESTS.length - 1 || currentIndex === -1;
@@ -240,10 +251,11 @@ function GameApp() {
       <CherryBlossoms />
       <div className="absolute inset-0 bg-black/20 pointer-events-none z-0" />
       
-      <div className="relative z-10 w-full h-full">
+      <div className="relative z-10 w-full h-full flex flex-col overflow-hidden">
         <TopBar screen={currentScreen} />
         
-        <main className="w-full h-full">
+        <main className="w-full flex-1 overflow-y-auto scrollbar-hide">
+
           {currentScreen === 'lobby' && (
             <LobbyScreen 
               selectedChar={selectedChar} 
@@ -254,10 +266,16 @@ function GameApp() {
               onPlay={() => setCurrentScreen('quest')} 
               onPlayDirect={(questId) => {
                 const char = CHARACTERS[selectedChar];
-                if (char.isPremium && !ownedChars.includes(char.name)) {
-                  // If locked, just play SFX or show message (handled by button later)
+                if (char.isPremium && !ownedChars.includes(char.name)) return;
+                
+                // 퀘스트 잠금 확인
+                const qIdx = QUESTS.findIndex(q => q.id === questId);
+                const isLocked = qIdx > 0 && !clearedQuests.includes(QUESTS[qIdx - 1].id);
+                if (isLocked) {
+                  playSfx('fail');
                   return;
                 }
+
                 setSelectedQuestId(questId);
                 setCurrentScreen('game');
               }}
@@ -266,6 +284,7 @@ function GameApp() {
           )}
           {currentScreen === 'quest' && (
             <QuestScreen 
+              clearedQuests={clearedQuests}
               onBack={() => setCurrentScreen('lobby')}
               onLaunch={(questId) => {
                 setSelectedQuestId(questId);
@@ -289,6 +308,9 @@ function GameApp() {
               selectedChar={CHARACTERS[selectedChar]} 
             />
           )}
+          
+          {currentScreen !== 'game' && <LegalFooter />}
+          {currentScreen !== 'game' && <div className="h-32 w-full" />}
         </main>
 
         {currentScreen !== 'game' && (
@@ -298,6 +320,9 @@ function GameApp() {
           />
         )}
       </div>
+
+
+
 
       <AnimatePresence>
         {showFailOffer && <FailOfferModal

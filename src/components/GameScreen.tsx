@@ -160,6 +160,10 @@ const MINION_PATTERNS: MinionPattern[] = [
   { name: 'VERTICAL', icon: '↓', nodes: [{ dx: 0, dy: -60 }, { dx: 0, dy: 60 }] },
   { name: 'V STRIKE', icon: '∧', nodes: [{ dx: -60, dy: -40 }, { dx: 0, dy: 50 }, { dx: 60, dy: -40 }] },
   { name: 'REVERSE V', icon: '∨', nodes: [{ dx: -60, dy: 40 }, { dx: 0, dy: -50 }, { dx: 60, dy: 40 }] },
+  { name: 'Z-SHAPE', icon: 'Z', nodes: [{ dx: -50, dy: -50 }, { dx: 50, dy: -50 }, { dx: -50, dy: 50 }, { dx: 50, dy: 50 }] },
+  { name: 'N-SHAPE', icon: 'N', nodes: [{ dx: -50, dy: 50 }, { dx: -50, dy: -50 }, { dx: 50, dy: 50 }, { dx: 50, dy: -50 }] },
+  { name: 'SQUARE', icon: '□', nodes: [{ dx: -50, dy: -50 }, { dx: 50, dy: -50 }, { dx: 50, dy: 50 }, { dx: -50, dy: 50 }, { dx: -50, dy: -50 }] },
+  { name: 'TRIANGLE', icon: '△', nodes: [{ dx: 0, dy: -60 }, { dx: 60, dy: 40 }, { dx: -60, dy: 40 }, { dx: 0, dy: -60 }] },
 ];
 
 const BG_MAP: Record<string, string> = {
@@ -478,7 +482,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
     '/assets/enemies/e_drone.png',
     '/assets/enemies/e_hound.png',
     '/assets/enemies/e_shield.png',
-    '/assets/enemies/e_thug.png'
+    '/assets/enemies/e_thug.png',
+    ...Array.from({ length: 19 }, (_, i) => `/assets/enemies/${i + 1}.png`)
   ];
 
   const BOSS_ASSETS = [
@@ -539,6 +544,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
           const randomMinion = MINION_ASSETS[Math.floor(Math.random() * MINION_ASSETS.length)];
 
           const randomPattern = MINION_PATTERNS[Math.floor(Math.random() * MINION_PATTERNS.length)];
+          const speedMultiplier = 1.0 + (currentQuest.level * 0.2);
+          
           return [...prev, {
             id: Date.now() + Math.random(),
             x: w * 0.1 + Math.random() * (w * 0.8),
@@ -546,8 +553,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
             size: isFever ? 140 : 120,
             img: randomMinion,
             createdAt: Date.now(),
-            vx: (Math.random() - 0.5) * 1.5,
-            vy: (Math.random() - 0.5) * 1.5,
+            vx: (Math.random() - 0.5) * 1.5 * speedMultiplier,
+            vy: (Math.random() - 0.5) * 1.5 * speedMultiplier,
             pattern: randomPattern,
             patternProgress: 0
           }];
@@ -555,7 +562,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
       }
 
       // Quick re-check: loop continues even if dead so revive works
-      const nextRate = (isFever ? 400 : 600) / timeScale;
+      // 난이도 가속: 레벨당 50ms씩 단축 (최소 200ms)
+      const baseRate = Math.max(300, 600 - (currentQuest.level * 50));
+      const feverRate = Math.max(200, 400 - (currentQuest.level * 40));
+      const nextRate = (isFever ? feverRate : baseRate) / timeScale;
       spawnTimer = setTimeout(spawnEnemy, nextRate);
     };
 
@@ -1481,24 +1491,23 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
                 transition={{ duration: 0.8, repeat: Infinity }}
                 className="text-center"
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <Swords className="w-10 h-10 text-cyan-400" />
-                  <h2 className="text-cyan-400 font-black text-5xl md:text-6xl italic tracking-wider drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
+                <div className="flex items-center gap-3">
+                  <Swords className="w-8 h-8 text-cyan-400" />
+                  <h2 className="text-cyan-400 font-black text-4xl italic tracking-wider drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
                     {t.game.usePattern}
                   </h2>
-                  <Swords className="w-10 h-10 text-cyan-400" />
+                  <Swords className="w-8 h-8 text-cyan-400" />
                 </div>
+
                 <p className="text-white/80 text-lg font-bold tracking-widest mb-2">
                   {t.game.tracePath}
                 </p>
-                <div className="bg-black/40 backdrop-blur-sm px-6 py-3 rounded-xl border border-cyan-400/30 inline-block">
-                  <p className="text-cyan-300 text-2xl font-black">
-                    {activePattern.icon} {t.game.patterns[activePattern.name as keyof typeof t.game.patterns] || activePattern.name} {activePattern.icon}
-                  </p>
-                  <p className="text-white/60 text-xs mt-1 font-bold">
-                    {t.game.swipeCheckpoints.replace('{val}', activePattern.nodes.length.toString())}
+                <div className="bg-black/20 backdrop-blur-sm px-6 py-2 rounded-xl border border-cyan-400/30 inline-block">
+                  <p className="text-white/80 text-lg font-bold tracking-widest">
+                    {t.game.usePattern}
                   </p>
                 </div>
+
               </motion.div>
             </motion.div>
           )}
@@ -1561,8 +1570,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
                 className="px-12 py-4 bg-emerald-500/30 backdrop-blur-sm border-y-4 border-emerald-400 skew-x-[-10deg]"
               >
                 <h2 className="text-emerald-300 font-black text-5xl italic drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]">
-                  ⚔️ {t.game.patternStrike}
+                  {activePattern ? (`${activePattern.icon} ${t.game.patterns[activePattern.name as keyof typeof t.game.patterns] || activePattern.name}`) : t.game.patternStrike}
                 </h2>
+
               </motion.div>
             </motion.div>
           )}

@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAudio } from '../contexts/AudioContext';
 import { Quest } from '../types';
+import { Lock } from 'lucide-react';
 
 interface QuestScreenProps {
   onBack: () => void;
   onLaunch: (questId: string) => void;
+  clearedQuests: string[];
 }
 
 export const QUESTS: Quest[] = [
@@ -71,7 +73,7 @@ const DifficultyTag = ({ difficulty }: { difficulty: Quest['difficulty'] }) => {
   );
 };
 
-export default function QuestScreen({ onBack, onLaunch }: QuestScreenProps) {
+export default function QuestScreen({ onBack, onLaunch, clearedQuests }: QuestScreenProps) {
   const { t } = useLanguage();
   const { playSfx } = useAudio();
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -114,27 +116,55 @@ export default function QuestScreen({ onBack, onLaunch }: QuestScreenProps) {
         <div className="w-full max-w-3xl mx-auto flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-2 md:py-4 space-y-3 md:space-y-5 custom-scrollbar touch-pan-y">
           {QUESTS.map((quest, idx) => {
             const isSelected = selectedIdx === idx;
+            const isLocked = idx > 0 && !clearedQuests.includes(QUESTS[idx - 1].id);
+
             return (
               <motion.div
                 key={quest.id}
-                onClick={() => { playSfx('select'); setSelectedIdx(idx); setShowBriefing(true); }}
+                onClick={() => { 
+                  if (isLocked) {
+                    playSfx('fail');
+                    return;
+                  }
+                  playSfx('select'); 
+                  setSelectedIdx(idx); 
+                  setShowBriefing(true); 
+                }}
                 className={`relative p-4 md:p-6 rounded-xl cursor-pointer overflow-hidden border-2 transition-all ${
-                  isSelected 
-                    ? 'bg-cyan-900/40 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]' 
-                    : 'bg-black/40 border-white/10 md:hover:border-white/30'
+                  isLocked
+                    ? 'bg-slate-900/60 border-white/5 grayscale opacity-60'
+                    : isSelected 
+                      ? 'bg-cyan-900/40 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]' 
+                      : 'bg-black/40 border-white/10 md:hover:border-white/30'
                 }`}
-                whileTap={{ scale: 0.98 }}
+                whileTap={isLocked ? {} : { scale: 0.98 }}
               >
                 {isSelected && (
                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-transparent pointer-events-none" />
                 )}
                 
                 <div className="flex justify-between items-start relative z-10">
-                   <div>
-                     <div className="text-white/40 text-[10px] font-bold tracking-widest mb-1">{t.quest.levelPrefix} {quest.level}</div>
-                     <h3 className={`text-xl font-black italic ${isSelected ? 'text-cyan-300' : 'text-white'}`}>{t.quest.missions[quest.id]?.title ?? quest.title}</h3>
+                   <div className="flex items-center gap-3">
+                     {isLocked && (
+                       <div className="bg-black/60 p-2 rounded-full border border-white/10 shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+                          <Lock size={16} className="text-white/40" />
+                       </div>
+                     )}
+                     <div>
+                       <div className="text-white/40 text-[10px] font-bold tracking-widest mb-1">
+                         {isLocked ? t.quest.locked : `${t.quest.levelPrefix} ${quest.level}`}
+                       </div>
+                       <h3 className={`text-lg md:text-xl font-black italic ${isSelected && !isLocked ? 'text-cyan-300' : 'text-white'}`}>
+                         {t.quest.missions[quest.id]?.title ?? quest.title}
+                       </h3>
+                       {isLocked && (
+                         <div className="text-[9px] font-bold text-red-400/80 mt-0.5 uppercase tracking-tighter">
+                           {t.quest.clearPrevious}
+                         </div>
+                       )}
+                     </div>
                    </div>
-                   <DifficultyTag difficulty={quest.difficulty} />
+                   {!isLocked && <DifficultyTag difficulty={quest.difficulty} />}
                 </div>
               </motion.div>
             );
