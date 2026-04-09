@@ -307,6 +307,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
   const [ultimateEnergy, setUltimateEnergy] = useState(0);
   const [activeUltimate, setActiveUltimate] = useState<string | null>(null);
   const [isInvincible, setIsInvincible] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
   const playerHpRef = useRef(playerHp);
 
   useEffect(() => {
@@ -325,6 +326,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
     setPatternProgress(0);
     setPatternResult(null);
     setBossShield(false);
+    setHasFailed(false);
     setTimeout(() => setIsInvincible(false), 3000);
   }, [reviveTrigger]);
 
@@ -449,11 +451,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
   }, [combo, isFever, playSfx, checkAchievements, coins, purchasedItems.length]);
 
   useEffect(() => {
-    if (playerHp <= 0 && !isInvincible) {
+    if (playerHp <= 0 && !isInvincible && !hasFailed) {
+      setHasFailed(true);
       playSfx('fail');
       onFail();
     }
-  }, [playerHp, onFail, playSfx, isInvincible]);
+  }, [playerHp, onFail, playSfx, isInvincible, hasFailed]);
 
   // Flush pending coins outside of render callback
   useEffect(() => {
@@ -491,67 +494,67 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
     let moveInterval: ReturnType<typeof setInterval>;
 
     const spawnEnemy = () => {
-      if (playerHpRef.current <= 0) return;
+      if (playerHpRef.current > 0) {
+        setEnemies(prev => {
+          const hasBoss = prev.some(e => e.isBoss);
+          const nextMilestone = (defeatedBosses + 1) * 50;
+          const isBossDue = totalKills >= nextMilestone && !hasBoss;
+          
+          if (isBossDue) {
+            const bossImg = BOSS_DATA[currentQuest.bossId]?.img || BOSS_ASSETS[0];
+            // Activate pattern system for boss fight
+            const randomPattern = BOSS_PATTERNS[Math.floor(Math.random() * BOSS_PATTERNS.length)];
+            setActivePattern(randomPattern);
+            setPatternProgress(0);
+            setPatternResult(null);
+            setBossShield(true);
+            patternTrailRef.current = [];
+            // Show "USE PATTERN!" intro
+            setShowPatternIntro(true);
+            setTimeout(() => setShowPatternIntro(false), 2500);
+            return [{
+              id: Date.now(),
+              x: (containerRef.current?.clientWidth || 800) / 2,
+              y: (containerRef.current?.clientHeight || 600) / 2,
+              size: 350,
+              img: bossImg,
+              isBoss: true,
+              hp: 150 + (defeatedBosses * 50) + (currentQuest.level * 100), // Harder based on quest
+              maxHp: 150 + (defeatedBosses * 50) + (currentQuest.level * 100),
+              createdAt: Date.now(),
+              vx: 2,
+              vy: 2,
+              phase: 0
+            }];
+          }
 
-      setEnemies(prev => {
-        const hasBoss = prev.some(e => e.isBoss);
-        const nextMilestone = (defeatedBosses + 1) * 50;
-        const isBossDue = totalKills >= nextMilestone && !hasBoss;
-        
-        if (isBossDue) {
-          const bossImg = BOSS_DATA[currentQuest.bossId]?.img || BOSS_ASSETS[0];
-          // Activate pattern system for boss fight
-          const randomPattern = BOSS_PATTERNS[Math.floor(Math.random() * BOSS_PATTERNS.length)];
-          setActivePattern(randomPattern);
-          setPatternProgress(0);
-          setPatternResult(null);
-          setBossShield(true);
-          patternTrailRef.current = [];
-          // Show "USE PATTERN!" intro
-          setShowPatternIntro(true);
-          setTimeout(() => setShowPatternIntro(false), 2500);
-          return [{
-            id: Date.now(),
-            x: (containerRef.current?.clientWidth || 800) / 2,
-            y: (containerRef.current?.clientHeight || 600) / 2,
-            size: 350,
-            img: bossImg,
-            isBoss: true,
-            hp: 150 + (defeatedBosses * 50) + (currentQuest.level * 100), // Harder based on quest
-            maxHp: 150 + (defeatedBosses * 50) + (currentQuest.level * 100),
+          if (hasBoss) return prev;
+          // === ONE AT A TIME: only spawn if no minions on field (fever: up to 3) ===
+          const minionCount = prev.filter(e => !e.isBoss).length;
+          const maxMinions = isFever ? 3 : 1;
+          if (minionCount >= maxMinions) return prev;
+
+          const w = containerRef.current?.clientWidth || window.innerWidth;
+          const h = containerRef.current?.clientHeight || window.innerHeight;
+          const randomMinion = MINION_ASSETS[Math.floor(Math.random() * MINION_ASSETS.length)];
+
+          const randomPattern = MINION_PATTERNS[Math.floor(Math.random() * MINION_PATTERNS.length)];
+          return [...prev, {
+            id: Date.now() + Math.random(),
+            x: w * 0.1 + Math.random() * (w * 0.8),
+            y: h * 0.15 + Math.random() * (h * 0.6),
+            size: isFever ? 140 : 120,
+            img: randomMinion,
             createdAt: Date.now(),
-            vx: 2,
-            vy: 2,
-            phase: 0
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
+            pattern: randomPattern,
+            patternProgress: 0
           }];
-        }
+        });
+      }
 
-        if (hasBoss) return prev;
-        // === ONE AT A TIME: only spawn if no minions on field (fever: up to 3) ===
-        const minionCount = prev.filter(e => !e.isBoss).length;
-        const maxMinions = isFever ? 3 : 1;
-        if (minionCount >= maxMinions) return prev;
-
-        const w = containerRef.current?.clientWidth || window.innerWidth;
-        const h = containerRef.current?.clientHeight || window.innerHeight;
-        const randomMinion = MINION_ASSETS[Math.floor(Math.random() * MINION_ASSETS.length)];
-
-        const randomPattern = MINION_PATTERNS[Math.floor(Math.random() * MINION_PATTERNS.length)];
-        return [...prev, {
-          id: Date.now() + Math.random(),
-          x: w * 0.1 + Math.random() * (w * 0.8),
-          y: h * 0.15 + Math.random() * (h * 0.6),
-          size: isFever ? 140 : 120,
-          img: randomMinion,
-          createdAt: Date.now(),
-          vx: (Math.random() - 0.5) * 1.5,
-          vy: (Math.random() - 0.5) * 1.5,
-          pattern: randomPattern,
-          patternProgress: 0
-        }];
-      });
-
-      // Quick re-check: spawn immediately when field is empty, otherwise normal interval
+      // Quick re-check: loop continues even if dead so revive works
       const nextRate = (isFever ? 400 : 600) / timeScale;
       spawnTimer = setTimeout(spawnEnemy, nextRate);
     };

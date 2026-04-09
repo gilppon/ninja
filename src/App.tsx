@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { motion, AnimatePresence } from 'motion/react';
 import TopBar from './components/TopBar';
 import BottomNav from './components/BottomNav';
@@ -19,6 +20,9 @@ import { AchievementProvider } from './contexts/AchievementContext';
 import { CHARACTERS } from './constants/characters';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginModal from './components/LoginModal';
+import MenuModal from './components/MenuModal';
+import { db } from './lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const CherryBlossoms = () => {
   const petals = Array.from({ length: 15 });
@@ -65,12 +69,100 @@ function GameApp() {
   const [victoryData, setVictoryData] = useState({ score: 0, coins: 0, isLastStage: false });
   const [reviveUsed, setReviveUsed] = useState(false);
   const [reviveTrigger, setReviveTrigger] = useState(0);
+  const [showMenu, setShowMenu] = useState(false);
+  const [ownedChars, setOwnedChars] = useState<string[]>(() => {
+    const saved = localStorage.getItem('ninja_owned_chars');
+    return saved ? JSON.parse(saved) : ['MASTER', 'JADE'];
+  });
 
-  const isPremiumChar = CHARACTERS[selectedChar].price > 0;
+  // 로그인 후 대기 중인 구매 요청을 자동 처리하기 위한 상태
+  const [pendingPurchase, setPendingPurchase] = useState<string | null>(null);
+  const [pendingBundlePurchase, setPendingBundlePurchase] = useState(false);
+
+  React.useEffect(() => {
+    localStorage.setItem('ninja_owned_chars', JSON.stringify(ownedChars));
+  }, [ownedChars]);
+
+  const isPremiumChar = CHARACTERS[selectedChar].isPremium;
   const { t } = useLanguage();
   const { user, loading } = useAuth();
   const { addCoins } = useCurrency();
   const { itemCounts, consumeItem } = useInventory();
+
+  // === Firestore에서 소유 캐릭터 로드 ===
+  const loadOwnedCharsFromFirestore = useCallback(async (uid: string) => {
+    try {
+      const docRef = doc(db, 'users', uid);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.ownedChars && Array.isArray(data.ownedChars)) {
+          // Firestore 데이터와 로컬 데이터 병합 (둘 다 유지)
+          setOwnedChars(prev => {
+            const merged = Array.from(new Set([...prev, ...data.ownedChars]));
+            return merged;
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load owned chars from Firestore:', err);
+    }
+  }, []);
+
+  // === Firestore에 소유 캐릭터 저장 ===
+  const saveOwnedCharsToFirestore = useCallback(async (uid: string, chars: string[]) => {
+    try {
+      const docRef = doc(db, 'users', uid);
+      await setDoc(docRef, { ownedChars: chars }, { merge: true });
+    } catch (err) {
+      console.error('Failed to save owned chars to Firestore:', err);
+    }
+  }, []);
+
+  // === 유저 로그인/로그아웃 감지 ===
+  React.useEffect(() => {
+    if (user) {
+      // 로그인 시 Firestore에서 데이터 로드
+      loadOwnedCharsFromFirestore(user.uid);
+    } else {
+      // 로그아웃 시 로컬 상태 초기화
+      setOwnedChars(['MASTER', 'JADE']);
+      setSelectedChar(0);
+    }
+  }, [user, loadOwnedCharsFromFirestore]);
+
+  // === 소유 캐릭터 변경 시 Firestore에 동기화 ===
+  React.useEffect(() => {
+    if (user && ownedChars.length > 2) {
+      // 기본 2캐릭 이상일 때만 저장 (프리미엄 구매 발생 시)
+      saveOwnedCharsToFirestore(user.uid, ownedChars);
+    }
+  }, [user, ownedChars, saveOwnedCharsToFirestore]);
+
+
+  // === 개별 캐릭터 잠금 해제 (로그인 필수) ===
+  const unlockChar = (name: string) => {
+    if (!user) {
+      // 미로그인 → 구매 예약 후 로그인 모달 표시
+      setPendingPurchase(name);
+      setShowLogin(true);
+      return;
+    }
+    if (!ownedChars.includes(name)) {
+      setOwnedChars(prev => [...prev, name]);
+    }
+  };
+
+  // === 전체 캐릭터 잠금 해제 (로그인 필수) ===
+  const unlockAll = () => {
+    if (!user) {
+      // 미로그인 → 번들 구매 예약 후 로그인 모달 표시
+      setPendingBundlePurchase(true);
+      setShowLogin(true);
+      return;
+    }
+    setOwnedChars(CHARACTERS.map(c => c.name));
+  };
 
   React.useEffect(() => {
     if (user && !loading) {
@@ -125,7 +217,8 @@ function GameApp() {
   return (
     <div className="relative w-full h-[100dvh] bg-gradient-to-br from-[#2e0854] via-[#7e22ce] to-[#d946ef] font-sans text-zinc-900 selection:bg-[#bb152c] selection:text-white overflow-hidden">
       <AnimatePresence>
-        {showLogin && <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />}
+        {showLogin && <LoginModal isOpen={showLogin} onClose={() => { setShowLogin(false); setPendingPurchase(null); setPendingBundlePurchase(false); }} />}
+        {showMenu && <MenuModal isOpen={showMenu} onClose={() => setShowMenu(false)} onActivatePass={unlockAll} onShowLogin={() => setShowLogin(true)} />}
         {showDailyReward && (
           <motion.div 
             initial={{ opacity: 0, y: -50, scale: 0.8 }}
@@ -154,8 +247,16 @@ function GameApp() {
             <LobbyScreen 
               selectedChar={selectedChar} 
               setSelectedChar={setSelectedChar} 
+              ownedChars={ownedChars}
+              onUnlockChar={unlockChar}
+              onShowMenu={() => setShowMenu(true)}
               onPlay={() => setCurrentScreen('quest')} 
               onPlayDirect={(questId) => {
+                const char = CHARACTERS[selectedChar];
+                if (char.isPremium && !ownedChars.includes(char.name)) {
+                  // If locked, just play SFX or show message (handled by button later)
+                  return;
+                }
                 setSelectedQuestId(questId);
                 setCurrentScreen('game');
               }}
@@ -190,7 +291,10 @@ function GameApp() {
         </main>
 
         {currentScreen !== 'game' && (
-          <BottomNav currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
+          <BottomNav 
+            currentScreen={currentScreen} 
+            setCurrentScreen={setCurrentScreen} 
+          />
         )}
       </div>
 
@@ -245,16 +349,21 @@ function GameApp() {
 
 export default function App() {
   return (
-    <AudioProvider>
-      <CurrencyProvider>
-        <InventoryProvider>
-          <AchievementProvider>
-            <AuthProvider>
-              <GameApp />
-            </AuthProvider>
-          </AchievementProvider>
-        </InventoryProvider>
-      </CurrencyProvider>
-    </AudioProvider>
+    <PayPalScriptProvider options={{
+      clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
+      currency: 'USD',
+    }}>
+      <AudioProvider>
+        <CurrencyProvider>
+          <InventoryProvider>
+            <AchievementProvider>
+              <AuthProvider>
+                <GameApp />
+              </AuthProvider>
+            </AchievementProvider>
+          </InventoryProvider>
+        </CurrencyProvider>
+      </AudioProvider>
+    </PayPalScriptProvider>
   );
 }

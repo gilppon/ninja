@@ -1,17 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Gift, Crown, Wallet, Globe, Shield, Zap, Star } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useAuth } from '../contexts/AuthContext';
+import PayPalCheckout from './PayPalCheckout';
 
 interface MenuModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onActivatePass: () => void;
+  onShowLogin: () => void;
 }
 
-export default function MenuModal({ isOpen, onClose }: MenuModalProps) {
+export default function MenuModal({ isOpen, onClose, onActivatePass, onShowLogin }: MenuModalProps) {
   const { t } = useLanguage();
   const { coins, addCoins } = useCurrency();
+  const { user } = useAuth();
+  const [showBundlePayPal, setShowBundlePayPal] = useState(false);
+  const [waitingForLogin, setWaitingForLogin] = useState(false);
+
+  React.useEffect(() => {
+    if (user && waitingForLogin) {
+      setShowBundlePayPal(true);
+      setWaitingForLogin(false);
+    }
+  }, [user, waitingForLogin]);
 
   if (!isOpen) return null;
 
@@ -86,9 +100,40 @@ export default function MenuModal({ isOpen, onClose }: MenuModalProps) {
                 </div>
               </div>
 
-              <button className="shimmer-effect relative w-full mt-6 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 py-4 rounded-xl shadow-[0_6px_0_0_#b45309] active:translate-y-1 active:shadow-none hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all duration-300 overflow-hidden">
-                <span className="relative z-10 font-headline font-black text-black text-lg uppercase tracking-widest">{t.menu.activate}</span>
-              </button>
+              {!showBundlePayPal ? (
+                <button 
+                  onClick={() => {
+                    if (!user) { 
+                      setWaitingForLogin(true);
+                      onShowLogin(); 
+                      return; 
+                    }
+                    setShowBundlePayPal(true);
+                  }}
+                  className="shimmer-effect relative w-full mt-6 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 py-4 rounded-xl shadow-[0_6px_0_0_#b45309] active:translate-y-1 active:shadow-none hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all duration-300 overflow-hidden"
+                >
+                  <span className="relative z-10 font-headline font-black text-black text-lg uppercase tracking-widest">{t.menu.activate}</span>
+                </button>
+              ) : (
+                <div className="mt-6">
+                  <PayPalCheckout
+                    amount="9.99"
+                    description="Season All-Pass: Unlock All Characters + 2x Rewards"
+                    onSuccess={() => {
+                      onActivatePass();
+                      setShowBundlePayPal(false);
+                      onClose();
+                    }}
+                    onCancel={() => setShowBundlePayPal(false)}
+                  />
+                  <button
+                    onClick={() => setShowBundlePayPal(false)}
+                    className="mt-2 w-full text-center text-[10px] text-zinc-500 hover:text-red-400 font-bold uppercase tracking-widest transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Resource Exchange */}

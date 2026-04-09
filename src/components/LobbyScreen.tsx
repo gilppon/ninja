@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useAudio } from '../contexts/AudioContext';
@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CHARACTERS } from '../constants/characters';
 import { useAuth } from '../contexts/AuthContext';
 import { Star } from 'lucide-react';
+import PayPalCheckout from './PayPalCheckout';
 
 const CyberMenuButton = ({ text, highlight, onClick, delay, hotEventText }: { text: string, highlight?: boolean, onClick: () => void, delay: number, hotEventText?: string }) => (
   <motion.button 
@@ -39,15 +40,27 @@ interface LobbyProps {
   onPlay: () => void;
   onPlayDirect: (questId: string) => void;
   onShowLogin: () => void;
+  onShowMenu: () => void;
   selectedChar: number;
   setSelectedChar: (index: number) => void;
+  ownedChars: string[];
+  onUnlockChar: (name: string) => void;
 }
 
-export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selectedChar, setSelectedChar }: LobbyProps) {
+export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, onShowMenu, selectedChar, setSelectedChar, ownedChars, onUnlockChar }: LobbyProps) {
   const { t } = useLanguage();
   const { addCoins } = useCurrency();
   const { playSfx } = useAudio();
   const { user } = useAuth();
+  const [showPayPal, setShowPayPal] = useState(false);
+  const [waitingForLogin, setWaitingForLogin] = useState(false);
+
+  React.useEffect(() => {
+    if (user && waitingForLogin) {
+      setShowPayPal(true);
+      setWaitingForLogin(false);
+    }
+  }, [user, waitingForLogin]);
 
   const characters = CHARACTERS;
   const activeChar = characters[selectedChar];
@@ -98,10 +111,12 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selecte
                  <img src={char.img} className="absolute inset-0 w-[140%] h-[140%] md:w-[180%] md:h-[180%] object-cover object-top -translate-y-2 -translate-x-[15%] md:-translate-x-[20%]" alt={char.name} referrerPolicy="no-referrer" />
                  
                  <div className={`absolute bottom-0 w-full z-20 py-3 flex flex-col items-center justify-center border-t-2 ${isActive ? 'bg-zinc-950 border-yellow-400' : 'bg-black/80 border-cyan-400/30'}`}>
-                    {char.price > 0 && (
-                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 px-3 py-0.5 rounded-full shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-premium-glow flex items-center gap-1 border border-white/20">
+                    {char.isPremium && (
+                      <div className={`absolute -top-6 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full shadow-[0_0_15px_rgba(251,191,36,0.6)] flex items-center gap-1 border border-white/20 ${ownedChars.includes(char.name) ? 'bg-gradient-to-r from-cyan-500 to-blue-500' : 'bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 animate-premium-glow'}`}>
                          <Star size={8} fill="black" className="text-black" />
-                         <span className="text-[9px] font-black text-black tracking-widest leading-none">PREMIUM</span>
+                         <span className="text-[9px] font-black text-black tracking-widest leading-none">
+                           {ownedChars.includes(char.name) ? 'CERTIFIED' : 'PREMIUM'}
+                         </span>
                          <Star size={8} fill="black" className="text-black" />
                       </div>
                     )}
@@ -153,7 +168,63 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, selecte
                 </div>
               </div>
             </motion.div>
+            {/* Unlock Button → PayPal Checkout */}
+            {activeChar.isPremium && !ownedChars.includes(activeChar.name) && (
+              <>
+                {!showPayPal ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (!user) { 
+                        setWaitingForLogin(true);
+                        onShowLogin(); 
+                        return; 
+                      }
+                      setShowPayPal(true);
+                    }}
+                    className="mt-4 w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.5)] border-2 border-white/20 flex items-center justify-center gap-2 group overflow-hidden relative pointer-events-auto"
+                  >
+                    <Star className="text-black group-hover:rotate-180 transition-transform" size={16} fill="black" />
+                    <span className="font-headline font-black text-black uppercase tracking-widest italic text-sm">{t.lobby.individualUnlock}</span>
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 pointer-events-auto"
+                  >
+                    <PayPalCheckout
+                      amount="3.99"
+                      description={`Unlock ${activeChar.name} Character`}
+                      onSuccess={() => {
+                        onUnlockChar(activeChar.name);
+                        setShowPayPal(false);
+                      }}
+                      onCancel={() => setShowPayPal(false)}
+                    />
+                    <button
+                      onClick={() => setShowPayPal(false)}
+                      className="mt-2 w-full text-center text-[10px] text-zinc-500 hover:text-red-400 font-bold uppercase tracking-widest transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </motion.div>
+                )}
+              </>
+            )}
          </motion.div>
+      </div>
+
+      {/* Side Menu */}
+      <div className="absolute right-0 top-32 flex flex-col gap-4 z-50 pr-4">
+        <CyberMenuButton 
+          text={t.menu.premiumPass.split(' (')[0]} 
+          highlight 
+          onClick={onShowMenu} 
+          delay={0.5} 
+          hotEventText={t.lobby.hotEvent} 
+        />
       </div>
     </div>
   );

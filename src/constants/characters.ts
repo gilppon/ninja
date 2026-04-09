@@ -1,6 +1,6 @@
 export interface Character {
   name: string;
-  price: number;
+  isPremium: boolean;
   unlocked: boolean;
   img: string;
   hasPeriodicShield?: boolean;
@@ -13,21 +13,21 @@ export interface Character {
 export const CHARACTERS: Character[] = [
   {
     name: 'MASTER',
-    price: 0,
+    isPremium: false,
     unlocked: true,
     img: '/assets/characters/ninja.png',
     ultimateType: 'none'
   },
   {
     name: 'JADE',
-    price: 0,
+    isPremium: false,
     unlocked: true,
     img: '/assets/characters/jade.png',
     ultimateType: 'none'
   },
   {
     name: 'FLAME',
-    price: 30000,
+    isPremium: true,
     unlocked: false,
     img: '/assets/characters/flame.png',
     coinMultiplier: 1.5,
@@ -35,14 +35,14 @@ export const CHARACTERS: Character[] = [
   },
   {
     name: 'ICE',
-    price: 50000,
+    isPremium: true,
     unlocked: false,
     img: '/assets/characters/ice.png',
     ultimateType: 'ice'
   },
   {
     name: 'THUNDER',
-    price: 80000,
+    isPremium: true,
     unlocked: false,
     img: '/assets/characters/thunder.png',
     ultimateType: 'thunder'

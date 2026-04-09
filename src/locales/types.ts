@@ -11,6 +11,7 @@ export interface Translations {
     hotEvent: string;
     premium: string;
     unlock: string;
+    individualUnlock: string;
     tactics: string;
     passiveSkillTitle: string;
     standardOperative: string;
@@ -89,6 +90,8 @@ export interface Translations {
     signInPrompt: string;
     signUpPrompt: string;
     abortAuth: string;
+    googleSignIn: string;
+    dividerOr: string;
   };
   menu: {
     daoFund: string;
