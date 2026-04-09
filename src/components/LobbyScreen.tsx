@@ -108,7 +108,7 @@ export default function LobbyScreen({ onPlay, onPlayDirect, onShowLogin, onShowM
             >
               <div className={`w-full h-full transform -skew-x-[10deg] overflow-hidden border-[3px] ${isActive ? 'border-yellow-300 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : 'border-cyan-400/20 md:group-hover:border-cyan-400/50'} flex flex-col justify-end relative bg-slate-900`}>
                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
-                 <img src={char.img} className="absolute inset-0 w-[140%] h-[140%] md:w-[180%] md:h-[180%] object-cover object-top -translate-y-2 -translate-x-[15%] md:-translate-x-[20%]" alt={char.name} referrerPolicy="no-referrer" />
+                 <img src={char.img} className="absolute inset-0 w-[140%] h-[140%] md:w-[180%] md:h-[180%] object-cover object-top -translate-y-2 -translate-x-[15%] md:-translate-x-[20%]" alt={`${char.name} - Ninja Action Character`} referrerPolicy="no-referrer" />
                  
                  <div className={`absolute bottom-0 w-full z-20 py-3 flex flex-col items-center justify-center border-t-2 ${isActive ? 'bg-zinc-950 border-yellow-400' : 'bg-black/80 border-cyan-400/30'}`}>
                     {char.isPremium && (

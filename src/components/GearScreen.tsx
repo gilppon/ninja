@@ -42,7 +42,7 @@ export default function GearScreen({ selectedChar }: { selectedChar: Character }
               <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full bg-gradient-to-b ${style.shadow} border-4 border-white/20 p-4 relative overflow-hidden shadow-2xl`}>
                 <motion.img 
                   src={selectedChar.img} 
-                  alt="ninja"
+                  alt={`${selectedChar.name} - Character Gear Setup`}
                   className="w-full h-full object-contain drop-shadow-2xl"
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}

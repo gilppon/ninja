@@ -160,7 +160,7 @@ export default function ShopScreen() {
                    {itemCounts[revealItem.id] > 0 ? t.shop.levelUpSuccess : t.shop.newGearUnlocked}
                  </div>
                  <div className="w-56 h-56 mx-auto mb-8 relative">
-                   <img src={revealItem.img} alt="new item" className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(255,223,0,0.5)]" />
+                   <img src={revealItem.img} alt="New Shop Item Unlocked" className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(255,223,0,0.5)]" />
                    <motion.div 
                      animate={{ rotate: 360 }}
                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}

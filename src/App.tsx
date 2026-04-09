@@ -216,6 +216,7 @@ function GameApp() {
 
   return (
     <div className="relative w-full h-[100dvh] bg-gradient-to-br from-[#2e0854] via-[#7e22ce] to-[#d946ef] font-sans text-zinc-900 selection:bg-[#bb152c] selection:text-white overflow-hidden">
+      <h1 className="sr-only">NINJA BRICK ACTION - Web-based Roguelike Arcade Game</h1>
       <AnimatePresence>
         {showLogin && <LoginModal isOpen={showLogin} onClose={() => { setShowLogin(false); setPendingPurchase(null); setPendingBundlePurchase(false); }} />}
         {showMenu && <MenuModal isOpen={showMenu} onClose={() => setShowMenu(false)} onActivatePass={unlockAll} onShowLogin={() => setShowLogin(true)} />}

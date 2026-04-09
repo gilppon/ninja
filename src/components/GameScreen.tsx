@@ -1161,7 +1161,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ character, questId, onFail, onS
                 <img 
                   src={enemy.img} 
                   className={`w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(0,0,0,0.5)] ${hitEnemiesRef.current.has(enemy.id) ? 'sepia(1) saturate(5) hue-rotate(-50deg) brightness(1.2)' : ''}`} 
-                  alt="e" 
+                  alt="Enemy Unit" 
                 />
 
                 {enemy.isBoss && (

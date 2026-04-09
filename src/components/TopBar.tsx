@@ -26,17 +26,17 @@ export default function TopBar({ screen }: { screen: Screen }) {
              <div className="w-full h-full overflow-hidden bg-slate-800 flex items-center justify-center rounded-br-xl rounded-tl-xl">
                 <img 
                   src="/assets/characters/ninja.png" 
-                  alt="Profile" 
+                  alt="Ninja Action Player Profile Avatar" 
                   className="w-[150%] h-[150%] object-cover object-top -translate-y-2 pointer-events-none"
                   referrerPolicy="no-referrer"
                 />
              </div>
           </div>
           <div className="flex flex-col justify-center">
-            <h1 className="text-xs md:text-sm font-black text-cyan-400 tracking-widest uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,1)] flex items-center gap-2">
+            <h2 className="text-xs md:text-sm font-black text-cyan-400 tracking-widest uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,1)] flex items-center gap-2">
               <span className="w-2 h-2 bg-yellow-400 transform rotate-45" />
               {t.topBar.player}
-            </h1>
+            </h2>
             <div className="text-lg md:text-xl text-white font-black italic tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,1)] uppercase">
               {user?.isAnonymous ? 'GHOST_NINJA' : (user?.email?.split('@')[0] || t.topBar.title)}
             </div>
