@@ -197,7 +197,9 @@ const es: Translations = {
       q2: { title: 'Instalaciones Congeladas', description: 'Una ciber-instalación congelada en el tiempo. Derrota al Oni Neón que custodia el núcleo.' },
       q3: { title: 'Cima del Dragón', description: 'Asciende la cima y mata al Ciber Dragón que causa tormentas electrónicas.' },
       q4: { title: 'Anomalía del Vacío', description: 'Aventúrate en la anomalía del vacío y sobrevive al Ninja Vacío corrupto.' }
-    }
+    },
+    locked: 'BLOQUEADO',
+    clearPrevious: 'Supera la etapa anterior para desbloquear'
   },
   achievements: {
     combo_10: { title: 'Novato de Combo', desc: 'Llega a 10 combos' },

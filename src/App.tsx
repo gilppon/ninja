@@ -15,7 +15,7 @@ import VictoryModal from './components/VictoryModal';
 import { QUESTS } from './components/QuestScreen';
 import { Screen } from './types';
 import { useLanguage } from './contexts/LanguageContext';
-import { AudioProvider } from './contexts/AudioContext';
+import { AudioProvider, useAudio } from './contexts/AudioContext';
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import { InventoryProvider, useInventory } from './contexts/InventoryContext';
 import { AchievementProvider } from './contexts/AchievementContext';
@@ -97,6 +97,7 @@ function GameApp() {
   const { user, loading } = useAuth();
   const { addCoins } = useCurrency();
   const { itemCounts, consumeItem } = useInventory();
+  const { playSfx } = useAudio();
 
   // === Firestore에서 유저 데이터 로드 ===
   const loadUserDataFromFirestore = useCallback(async (uid: string) => {

@@ -197,7 +197,9 @@ const zh: Translations = {
       q2: { title: '冰封设施', description: '被时间冻结的赛博设施。击败守护核心的霓虹鬼。' },
       q3: { title: '龙之巅峰', description: '登上巅峰，击杀引发电子风暴的赛博巨龙。' },
       q4: { title: '虚空异变', description: '深入虚空异变区域，在堕落的虚空忍者手下求存。' }
-    }
+    },
+    locked: '未解锁',
+    clearPrevious: '通关前一关卡即可解锁'
   },
   achievements: {
     combo_10: { title: '连击入门', desc: '达到10连击' },
